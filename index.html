@@ -586,11 +586,11 @@ async function doRegister(){
 }
 
 async function googleLogin(){
-  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://yuanxinzhang.com'}});
   if(error)toast(error.message,true);
 }
 async function appleLogin(){
-  const{error}=await sb.auth.signInWithOAuth({provider:'apple',options:{redirectTo:window.location.href}});
+  const{error}=await sb.auth.signInWithOAuth({provider:'apple',options:{redirectTo:'https://yuanxinzhang.com'}});
   if(error)toast(error.message,true);
 }
 
