@@ -684,7 +684,7 @@ async function pubPost(){
 }
 
 // ── POSTS ──
-async function loadPosts(){
+async function loadPosts(){ await new Promise(r=>setTimeout(r,500));
   document.getElementById('pFeed').innerHTML=
     `<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
   let q=sb.from('posts')
