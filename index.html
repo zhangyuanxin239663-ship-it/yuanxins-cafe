@@ -392,7 +392,7 @@ async function pubPost(){
 // ── POSTS ──
 async function loadPosts(){
   document.getElementById('pFeed').innerHTML=`<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
-  let path='posts?select=*,profiles(id,name,avatar_url,initials),comments(id,user_id,author_name,text,created_at,profiles(id,name,avatar_url,initials)),likes(user_id)&order=created_at.desc';
+  let path='posts?select=*,profiles!posts_user_id_fkey(id,name,avatar_url,initials),comments(id,user_id,author_name,text,created_at,profiles(id,name,avatar_url,initials)),likes(user_id)&order=created_at.desc';
   if(searchQ)path+='&or=(content.ilike.%25'+encodeURIComponent(searchQ)+'%25,author_name.ilike.%25'+encodeURIComponent(searchQ)+'%25)';
   const{data:posts,error}=await api(path);
   if(error){document.getElementById('pFeed').innerHTML=`<p class="nr">Could not load posts. ${JSON.stringify(error)}</p>`;return;}
