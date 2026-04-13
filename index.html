@@ -283,6 +283,32 @@ function avH(p){if(p&&p.avatar_url)return`<img src="${esc(p.avatar_url)}" alt=""
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.style.borderColor=err?'rgba(176,80,64,.4)':'rgba(200,169,126,.15)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 function setBtn(id,loading,label){const b=document.getElementById(id);if(!b)return;b.disabled=loading;b.innerHTML=loading?`<span class="spin"></span>${label||'…'}`:label;}
 
+function createPostHTML(p){
+  const canDel = currentUser && currentUser.id === p.user_id;
+  const authorInitials = (p.author_name || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  
+  return `<div class="post" id="post-${p.id}">
+    <div class="p-hd">
+      <div class="av" onclick="viewPro('${p.user_id}')" style="cursor:pointer;">${authorInitials}</div>
+      <div class="p-meta">
+        <button class="p-auth" onclick="viewPro('${p.user_id}')">${esc(p.author_name || 'Anonymous')}</button>
+        <div class="p-time">just now</div>
+      </div>
+    </div>
+    <div class="p-body">${esc(p.content)}</div>
+    <div class="p-acts">
+      <button class="pa" onclick="toggleCmts('${p.id}')" id="cb-${p.id}">◇ 0 replies</button>
+      ${canDel ? `<button class="pa" onclick="delPost('${p.id}')" style="margin-left:auto;color:var(--danger);">Delete</button>` : ''}
+    </div>
+    <div class="cmts-wrap" id="cmw-${p.id}">
+      <div class="cmts-inner">
+        <p class="no-cmt">No replies yet…</p>
+        ${currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${p.id}" placeholder="Reply…" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="btn-cmt" onclick="addCmt('${p.id}')">Send</button></div>` : `<p class="sign-cmt"><a onclick="openModal('loginModal')">Sign in</a> to reply</p>`}
+      </div>
+    </div>
+  </div>`;
+}
+
 // ── NAV ──
 window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('sc',scrollY>40));
 function showPage(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(n+'Page').classList.add('active');window.scrollTo(0,0);}
@@ -388,42 +414,121 @@ function renderCompose(){
 function uCC(){const ta=document.getElementById('cTA'),btn=document.getElementById('pubBtn'),c=document.getElementById('cCnt');if(!ta)return;c.textContent=ta.value.length+' / 1000';btn.disabled=ta.value.trim().length===0;}
 
 async function pubPost(){
-  const ta=document.getElementById('cTA');const text=ta.value.trim();
-  if(!text||!currentUser||!currentProfile)return;
-  const btn=document.getElementById('pubBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
-  const{error}=await api('posts',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({user_id:currentUser.id,author_name:currentProfile.name||'Anonymous',content:text})});
-  if(error){toast('Error posting: '+(error.message||JSON.stringify(error)),true);btn.disabled=false;btn.innerHTML='Publish';return;}
-  ta.value='';uCC();await loadPosts();toast('Shared ✦');
+  const ta = document.getElementById('cTA');
+  const text = ta.value.trim();
+  if(!text || !currentUser || !currentProfile) return;
+  
+  const btn = document.getElementById('pubBtn');
+  const originalText = btn.innerHTML;
+  
+  // Show loading on just the button
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Publishing...';
+  
+  const {error} = await api('posts', {
+    method: 'POST', 
+    headers: {'Prefer': 'return=minimal'}, 
+    body: JSON.stringify({
+      user_id: currentUser.id, 
+      author_name: currentProfile.name || 'Anonymous', 
+      content: text
+    })
+  });
+  
+  if(error) {
+    toast('Error posting', true);
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    return;
+  }
+  
+  // Clear the textarea
+  ta.value = '';
+  uCC();
+  
+  // Add the new post to the top of the list instantly (no full reload!)
+  const newPost = {
+    id: 'temp-' + Date.now(),
+    user_id: currentUser.id,
+    author_name: currentProfile.name || 'Anonymous',
+    content: text,
+    created_at: new Date().toISOString()
+  };
+  
+  // Insert new post at the top
+  const feed = document.getElementById('pFeed');
+  const currentPosts = feed.innerHTML;
+  const newPostHtml = createPostHTML(newPost);
+  
+  if(currentPosts.includes('Nothing yet') || currentPosts.includes('loading')) {
+    feed.innerHTML = newPostHtml;
+  } else {
+    feed.innerHTML = newPostHtml + currentPosts;
+  }
+  
+  // Update post count
+  const countEl = document.getElementById('pCount');
+  const currentCount = parseInt(countEl.textContent) || 0;
+  countEl.textContent = (currentCount + 1) + ' feelings';
+  
+  // Reset button
+  btn.disabled = false;
+  btn.innerHTML = originalText;
+  toast('✨ Feeling shared!');
 }
 
 // ── POSTS ──
 async function loadPosts(){
-  const feed=document.getElementById('pFeed');
-  if(!feed)return;
-  feed.innerHTML=`<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
+  const feed = document.getElementById('pFeed');
+  if(!feed) return;
   
-  const{data:posts,error}=await api('posts?order=created_at.desc');
-  if(error){feed.innerHTML=`<p class="nr">Could not load posts. ${JSON.stringify(error)}</p>`;return;}
-  
-  const countEl=document.getElementById('pCount');
-  if(countEl)countEl.textContent=(posts||[]).length+' feelings';
-  
-  if(!posts||!posts.length){feed.innerHTML=`<p class="nr">${searchQ?'No results for "'+esc(searchQ)+'"':'Nothing yet — be the first to share.'}</p>`;return;}
-  
-  // Get profiles for each post
-  const profilesMap={};
-  for(let post of posts){
-    if(post.user_id && !profilesMap[post.user_id]){
-      const{data:pro}=await api('profiles?id=eq.'+post.user_id+'&limit=1');
-      if(pro&&pro[0])profilesMap[post.user_id]=pro[0];
-    }
+  // Only show loading on first load (when feed is empty)
+  if(feed.children.length === 0 || feed.innerHTML.includes('loading') || feed.innerHTML.includes('Nothing yet')) {
+    feed.innerHTML = `<div class="loading-msg"><span class="spin"></span>Loading feelings...</div>`;
   }
   
-  feed.innerHTML=posts.map(p=>{
-    const pro=profilesMap[p.user_id]||{name:p.author_name,initials:'?',avatar_url:null};
-    const canDel=currentUser&&currentUser.id===p.user_id;
-    return `<div class="post" id="post-${p.id}"><div class="p-hd"><div class="av" onclick="viewPro('${p.user_id}')" style="cursor:pointer;">${avH(pro)}</div><div class="p-meta"><button class="p-auth" onclick="viewPro('${p.user_id}')">${esc(p.author_name)}</button><div class="p-time">${timeAgo(p.created_at)}</div></div></div><div class="p-body">${esc(p.content)}</div><div class="p-acts"><button class="pa" onclick="toggleCmts('${p.id}')" id="cb-${p.id}">◇ 0 replies</button>${canDel?`<button class="pa" onclick="delPost('${p.id}')" style="margin-left:auto;color:var(--danger);">Delete</button>`:''}</div><div class="cmts-wrap" id="cmw-${p.id}"><div class="cmts-inner"><p class="no-cmt">No replies yet…</p>${currentUser?`<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${p.id}" placeholder="Reply…" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="btn-cmt" onclick="addCmt('${p.id}')">Send</button></div>`:`<p class="sign-cmt"><a onclick="openModal('loginModal')">Sign in</a> to reply</p>`}</div></div></div>`;
+  const {data: posts, error} = await api('posts?order=created_at.desc');
+  
+  if(error) {
+    feed.innerHTML = `<p class="nr">Could not load posts. Please refresh.</p>`;
+    return;
+  }
+  
+  const countEl = document.getElementById('pCount');
+  if(countEl) countEl.textContent = (posts || []).length + ' feelings';
+  
+  if(!posts || !posts.length) {
+    feed.innerHTML = `<p class="nr">Nothing yet — be the first to share.</p>`;
+    return;
+  }
+  
+  // Store current user for delete permission
+  const currentUserId = currentUser ? currentUser.id : null;
+  
+  feed.innerHTML = posts.map(p => {
+    const canDel = currentUserId && currentUserId === p.user_id;
+    const authorInitials = (p.author_name || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    
+    return `<div class="post" id="post-${p.id}">
+      <div class="p-hd">
+        <div class="av" onclick="viewPro('${p.user_id}')" style="cursor:pointer;">${authorInitials}</div>
+        <div class="p-meta">
+          <button class="p-auth" onclick="viewPro('${p.user_id}')">${esc(p.author_name || 'Anonymous')}</button>
+          <div class="p-time">${timeAgo(p.created_at)}</div>
+        </div>
+      </div>
+      <div class="p-body">${esc(p.content)}</div>
+      <div class="p-acts">
+        <button class="pa" onclick="toggleCmts('${p.id}')" id="cb-${p.id}">◇ 0 replies</button>
+        ${canDel ? `<button class="pa" onclick="delPost('${p.id}')" style="margin-left:auto;color:var(--danger);">Delete</button>` : ''}
+      </div>
+      <div class="cmts-wrap" id="cmw-${p.id}">
+        <div class="cmts-inner">
+          <p class="no-cmt">No replies yet…</p>
+          ${currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${p.id}" placeholder="Reply…" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="btn-cmt" onclick="addCmt('${p.id}')">Send</button></div>` : `<p class="sign-cmt"><a onclick="openModal('loginModal')">Sign in</a> to reply</p>`}
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -453,9 +558,36 @@ function cmtsHTML(postId,cmts){
 }
 
 async function delPost(id){
-  if(!currentUser)return;
-  await api('posts?id=eq.'+id+'&user_id=eq.'+currentUser.id,{method:'DELETE'});
-  await loadPosts();toast('Deleted.');
+  if(!currentUser) return;
+  if(!confirm('Delete this feeling?')) return;
+  
+  // Find the post element
+  const postElement = document.getElementById('post-' + id);
+  if(!postElement) return;
+  
+  // Add fade-out effect
+  postElement.style.transition = 'opacity 0.3s ease';
+  postElement.style.opacity = '0';
+  
+  const {error} = await api('posts?id=eq.' + id + '&user_id=eq.' + currentUser.id, {method: 'DELETE'});
+  
+  if(error) {
+    // Restore if error
+    postElement.style.opacity = '1';
+    toast('Could not delete', true);
+    return;
+  }
+  
+  // Remove the post after animation
+  setTimeout(() => {
+    postElement.remove();
+    // Update post count
+    const countEl = document.getElementById('pCount');
+    const currentCount = parseInt(countEl.textContent) || 0;
+    countEl.textContent = Math.max(0, currentCount - 1) + ' feelings';
+  }, 300);
+  
+  toast('Deleted ✦');
 }
 
 // ── PROFILE ──
