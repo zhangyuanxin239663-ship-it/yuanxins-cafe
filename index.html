@@ -259,14 +259,20 @@ let currentUser=null,currentProfile=null,searchQ='';
 
 // ── DIRECT API ──
 async function api(path,opts={}){
-  const s=await sb.auth.getSession();
-  const token=(s&&s.data&&s.data.session&&s.data.session.access_token)||SKEY;
-  const h={'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json',...(opts.headers||{})};
-  const r=await fetch(SURL+'/rest/v1/'+path,{...opts,headers:h});
-  if(r.status===204)return{data:null,error:null};
-  const d=await r.json();
-  if(!r.ok)return{data:null,error:d};
-  return{data:d,error:null};
+  try{
+    const s=await sb.auth.getSession();
+    const token=(s&&s.data&&s.data.session&&s.data.session.access_token)||SKEY;
+    const h={'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json',...(opts.headers||{})};
+    const r=await fetch(SURL+'/rest/v1/'+path,{...opts,headers:h});
+    if(r.status===204)return{data:null,error:null};
+    const text=await r.text();
+    if(!text||text.trim()==='')return{data:null,error:null};
+    const d=JSON.parse(text);
+    if(!r.ok)return{data:null,error:d};
+    return{data:d,error:null};
+  }catch(e){
+    return{data:null,error:e};
+  }
 }
 
 // ── UTILS ──
@@ -305,9 +311,12 @@ sb.auth.onAuthStateChange(async(event,session)=>{
   if(session&&session.user){
     currentUser=session.user;
     await loadProfile(session.user.id);
+    if(document.getElementById('feelingsPage').classList.contains('active')){
+      renderCompose();
+      loadPosts();
+    }
   }else{currentUser=null;currentProfile=null;}
   renderNav();
-  if(document.getElementById('feelingsPage').classList.contains('active')){renderCompose();}
 });
 
 async function doLogin(){
@@ -384,36 +393,36 @@ async function pubPost(){
   const btn=document.getElementById('pubBtn');
   btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
   const{error}=await api('posts',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify({user_id:currentUser.id,author_name:currentProfile.name||'Anonymous',content:text})});
-  if(error){toast(JSON.stringify(error),true);btn.disabled=false;btn.textContent='Publish';return;}
+  if(error){toast('Error posting: '+(error.message||JSON.stringify(error)),true);btn.disabled=false;btn.innerHTML='Publish';return;}
   ta.value='';uCC();await loadPosts();toast('Shared ✦');
 }
 
-// ── POSTS (FIXED VERSION) ──
+// ── POSTS ──
 async function loadPosts(){
-  document.getElementById('pFeed').innerHTML=`<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
+  const feed=document.getElementById('pFeed');
+  if(!feed)return;
+  feed.innerHTML=`<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
   
-  // Simplified query that definitely works
-  let path='posts?order=created_at.desc';
+  const{data:posts,error}=await api('posts?order=created_at.desc');
+  if(error){feed.innerHTML=`<p class="nr">Could not load posts. ${JSON.stringify(error)}</p>`;return;}
   
-  const{data:posts,error}=await api(path);
-  if(error){document.getElementById('pFeed').innerHTML=`<p class="nr">Could not load posts. ${JSON.stringify(error)}</p>`;return;}
+  const countEl=document.getElementById('pCount');
+  if(countEl)countEl.textContent=(posts||[]).length+' feelings';
   
-  document.getElementById('pCount').textContent=(posts||[]).length+' feelings';
-  if(!posts||!posts.length){document.getElementById('pFeed').innerHTML=`<p class="nr">${searchQ?'No results for "'+esc(searchQ)+'"':'Nothing yet — be the first to share.'}</p>`;return;}
+  if(!posts||!posts.length){feed.innerHTML=`<p class="nr">${searchQ?'No results for "'+esc(searchQ)+'"':'Nothing yet — be the first to share.'}</p>`;return;}
   
   // Get profiles for each post
-  const profilesMap = {};
+  const profilesMap={};
   for(let post of posts){
     if(post.user_id && !profilesMap[post.user_id]){
-      const {data: pro} = await api('profiles?id=eq.'+post.user_id+'&limit=1');
-      if(pro && pro[0]) profilesMap[post.user_id] = pro[0];
+      const{data:pro}=await api('profiles?id=eq.'+post.user_id+'&limit=1');
+      if(pro&&pro[0])profilesMap[post.user_id]=pro[0];
     }
   }
   
-  document.getElementById('pFeed').innerHTML=posts.map(p => {
-    const pro = profilesMap[p.user_id] || {name: p.author_name, initials: '?', avatar_url: null};
-    const liked = false;
-    const canDel = currentUser && currentUser.id === p.user_id;
+  feed.innerHTML=posts.map(p=>{
+    const pro=profilesMap[p.user_id]||{name:p.author_name,initials:'?',avatar_url:null};
+    const canDel=currentUser&&currentUser.id===p.user_id;
     return `<div class="post" id="post-${p.id}"><div class="p-hd"><div class="av" onclick="viewPro('${p.user_id}')" style="cursor:pointer;">${avH(pro)}</div><div class="p-meta"><button class="p-auth" onclick="viewPro('${p.user_id}')">${esc(p.author_name)}</button><div class="p-time">${timeAgo(p.created_at)}</div></div></div><div class="p-body">${esc(p.content)}</div><div class="p-acts"><button class="pa" onclick="toggleCmts('${p.id}')" id="cb-${p.id}">◇ 0 replies</button>${canDel?`<button class="pa" onclick="delPost('${p.id}')" style="margin-left:auto;color:var(--danger);">Delete</button>`:''}</div><div class="cmts-wrap" id="cmw-${p.id}"><div class="cmts-inner"><p class="no-cmt">No replies yet…</p>${currentUser?`<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${p.id}" placeholder="Reply…" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="btn-cmt" onclick="addCmt('${p.id}')">Send</button></div>`:`<p class="sign-cmt"><a onclick="openModal('loginModal')">Sign in</a> to reply</p>`}</div></div></div>`;
   }).join('');
 }
@@ -441,11 +450,6 @@ function cmtsHTML(postId,cmts){
   const list=cmts.length===0?`<p class="no-cmt">No replies yet…</p>`:cmts.map(c=>{const cp=c.profiles||{};return`<div class="cmt"><div class="cmt-hd"><div class="cmt-av" onclick="viewPro('${c.user_id}')" style="cursor:pointer;">${avH(cp)}</div><span class="cmt-auth">${esc(c.author_name)}</span><span class="cmt-time">${timeAgo(c.created_at)}</span></div><div class="cmt-body">${esc(c.text)}</div></div>`;}).join('');
   const form=currentUser?`<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply…" onkeydown="if(event.key==='Enter')addCmt('${postId}')"><button class="btn-cmt" onclick="addCmt('${postId}')">Send</button></div>`:`<p class="sign-cmt"><a onclick="openModal('loginModal')">Sign in</a> to reply</p>`;
   return list+form;
-}
-
-async function toggleLike(postId,isLiked){
-  if(!currentUser){openModal('loginModal');return;}
-  toast('Likes coming soon!', true);
 }
 
 async function delPost(id){
