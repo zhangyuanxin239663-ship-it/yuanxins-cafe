@@ -702,6 +702,7 @@ async function loadPosts(){
     return;
   }
   document.getElementById('pFeed').innerHTML=posts.map(p=>postHTML(p)).join('');
+  }catch(e){document.getElementById('pFeed').innerHTML=`<p class="nr">Could not load posts.</p>`;console.error(e);}
 }
 
 function postHTML(p){
