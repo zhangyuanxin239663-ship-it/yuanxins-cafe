@@ -408,13 +408,32 @@ async function pubPost(){
 // ── POSTS ──
 async function loadPosts(){
   document.getElementById('pFeed').innerHTML=`<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
-  let path='posts?select=*,profiles!posts_user_id_fkey(id,name,avatar_url,initials),comments(id,user_id,author_name,text,created_at,profiles(id,name,avatar_url,initials)),likes(user_id)&order=created_at.desc';
-  if(searchQ)path+='&or=(content.ilike.%25'+encodeURIComponent(searchQ)+'%25,author_name.ilike.%25'+encodeURIComponent(searchQ)+'%25)';
+  
+  // Simplified query that definitely works
+  let path='posts?order=created_at.desc';
+  
   const{data:posts,error}=await api(path);
   if(error){document.getElementById('pFeed').innerHTML=`<p class="nr">Could not load posts. ${JSON.stringify(error)}</p>`;return;}
+  
   document.getElementById('pCount').textContent=(posts||[]).length+' feelings';
   if(!posts||!posts.length){document.getElementById('pFeed').innerHTML=`<p class="nr">${searchQ?'No results for "'+esc(searchQ)+'"':'Nothing yet — be the first to share.'}</p>`;return;}
-  document.getElementById('pFeed').innerHTML=posts.map(p=>postHTML(p)).join('');
+  
+  // Get profiles for each post
+  const profiles = {};
+  for(let post of posts){
+    if(post.user_id && !profiles[post.user_id]){
+      const {data: pro} = await api('profiles?id=eq.'+post.user_id+'&limit=1');
+      if(pro && pro[0]) profiles[post.user_id] = pro[0];
+    }
+  }
+  
+  document.getElementById('pFeed').innerHTML=posts.map(p => {
+    const pro = profiles[p.user_id] || {name: p.author_name, initials: '?', avatar_url: null};
+    const liked = false;
+    const lc = 0, cc = 0;
+    const canDel = currentUser && currentUser.id === p.user_id;
+    return `<div class="post" id="post-${p.id}"><div class="p-hd"><div class="av" onclick="viewPro('${p.user_id}')" style="cursor:pointer;">${avH(pro)}</div><div class="p-meta"><button class="p-auth" onclick="viewPro('${p.user_id}')">${esc(p.author_name)}</button><div class="p-time">${timeAgo(p.created_at)}</div></div></div><div class="p-body">${esc(p.content)}</div><div class="p-acts"><button class="pa" onclick="toggleCmts('${p.id}')" id="cb-${p.id}">◇ 0 replies</button>${canDel?`<button class="pa" onclick="delPost('${p.id}')" style="margin-left:auto;color:var(--danger);">Delete</button>`:''}</div><div class="cmts-wrap" id="cmw-${p.id}"><div class="cmts-inner"><p class="no-cmt">No replies yet…</p>${currentUser?`<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${p.id}" placeholder="Reply…" onkeydown="if(event.key==='Enter')addCmt('${p.id}')"><button class="btn-cmt" onclick="addCmt('${p.id}')">Send</button></div>`:`<p class="sign-cmt"><a onclick="openModal('loginModal')">Sign in</a> to reply</p>`}</div></div></div>`;
+  }).join('');
 }
 
 function postHTML(p){
