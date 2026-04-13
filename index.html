@@ -472,8 +472,6 @@ nav.sc{background:rgba(13,12,11,.92);backdrop-filter:blur(14px);padding:15px 40p
 
 <div class="toast" id="toast"></div>
 
-
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SURL='https://kjgeitgrvljrqblbrcet.supabase.co';
@@ -587,11 +585,11 @@ async function doRegister(){
 }
 
 async function googleLogin(){
-  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://yuanxinzhang.com'}});
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
   if(error)toast(error.message,true);
 }
 async function appleLogin(){
-  const{error}=await sb.auth.signInWithOAuth({provider:'apple',options:{redirectTo:'https://yuanxinzhang.com'}});
+  const{error}=await sb.auth.signInWithOAuth({provider:'apple',options:{redirectTo:window.location.href}});
   if(error)toast(error.message,true);
 }
 
@@ -672,29 +670,31 @@ async function pubPost(){
   if(!text||!currentUser)return;
   const btn=document.getElementById('pubBtn');
   btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
-  const{error}=await sb.from('posts').insert({
-    user_id:currentUser.id,
-    author_name:currentProfile.name||'Anonymous',
-    content:text
+  const session=await sb.auth.getSession();
+  const token=session.data.session?.access_token||SKEY;
+  const resp=await fetch(SURL+'/rest/v1/posts',{method:'POST',
+    headers:{'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({user_id:currentUser.id,author_name:currentProfile.name||'Anonymous',content:text})
   });
-  if(error){toast(error.message,true);btn.disabled=false;btn.textContent='Publish';return;}
+  if(!resp.ok){const e=await resp.text();toast(e,true);btn.disabled=false;btn.textContent='Publish';return;}
   ta.value='';uCC();
   await loadPosts();
   toast('Shared ✦');
 }
 
 // ── POSTS ──
-async function loadPosts(){ await new Promise(r=>setTimeout(r,500));
+async function loadPosts(){
   document.getElementById('pFeed').innerHTML=
     `<div class="loading-msg"><span class="spin"></span>Loading…</div>`;
-  let q=sb.from('posts')
-    .select(`*,profiles(id,name,avatar_url,initials),
-             comments(id,user_id,author_name,text,created_at,profiles(id,name,avatar_url,initials)),
-             likes(user_id)`)
-    .order('created_at',{ascending:false});
-  if(searchQ)q=q.or(`content.ilike.%${searchQ}%,author_name.ilike.%${searchQ}%`);
-  const{data:posts,error}=await q;
-  if(error){document.getElementById('pFeed').innerHTML=`<p class="nr">Could not load posts.</p>`;return;}
+  try{
+    let url=SURL+'/rest/v1/posts?select=*,profiles(id,name,avatar_url,initials),comments(id,user_id,author_name,text,created_at,profiles(id,name,avatar_url,initials)),likes(user_id)&order=created_at.desc';
+    if(searchQ) url+=`&or=(content.ilike.%25${encodeURIComponent(searchQ)}%25,author_name.ilike.%25${encodeURIComponent(searchQ)}%25)`;
+    const headers={'apikey':SKEY,'Authorization':'Bearer '+SKEY};
+    const session=await sb.auth.getSession();
+    if(session.data.session) headers['Authorization']='Bearer '+session.data.session.access_token;
+    const resp=await fetch(url,{headers});
+    const posts=await resp.json();
+    if(!resp.ok){document.getElementById('pFeed').innerHTML=`<p class="nr">Could not load posts.</p>`;console.error(posts);return;}
   document.getElementById('pCount').textContent=(posts||[]).length+' feelings';
   if(!posts||!posts.length){
     document.getElementById('pFeed').innerHTML=
@@ -766,16 +766,18 @@ async function addCmt(postId){
   if(!inp)return;
   const text=inp.value.trim();if(!text)return;
   inp.disabled=true;
-  const{error}=await sb.from('comments').insert({
-    post_id:postId,user_id:currentUser.id,
-    author_name:currentProfile.name||'Anonymous',text
+  const session2=await sb.auth.getSession();
+  const token2=session2.data.session?.access_token||SKEY;
+  const cr=await fetch(SURL+'/rest/v1/comments',{method:'POST',
+    headers:{'apikey':SKEY,'Authorization':'Bearer '+token2,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body:JSON.stringify({post_id:postId,user_id:currentUser.id,author_name:currentProfile.name||'Anonymous',text})
   });
   inp.disabled=false;
-  if(error){toast(error.message,true);return;}
+  if(!cr.ok){toast('Could not post comment',true);return;}
   inp.value='';
-  const{data:cmts}=await sb.from('comments')
-    .select('*,profiles(id,name,avatar_url,initials)')
-    .eq('post_id',postId).order('created_at',{ascending:true});
+  const cmtsResp=await fetch(SURL+'/rest/v1/comments?select=*,profiles(id,name,avatar_url,initials)&post_id=eq.'+postId+'&order=created_at.asc',
+    {headers:{'apikey':SKEY,'Authorization':'Bearer '+token2}});
+  const cmts=await cmtsResp.json();
   const inner=document.querySelector(`#cmw-${postId} .cmts-inner`);
   if(inner)inner.innerHTML=cmtsHTML(postId,cmts||[]);
   const cb=document.getElementById('cb-'+postId);
@@ -789,13 +791,18 @@ async function toggleLike(postId,isLiked){
   const lcEl=document.getElementById('lc-'+postId);
   const lbEl=document.getElementById('lb-'+postId);
   const cur=parseInt(lcEl?.textContent||'0');
+  const slike=await sb.auth.getSession();
+  const tlike=slike.data.session?.access_token||SKEY;
   if(was){
-    await sb.from('likes').delete().eq('post_id',postId).eq('user_id',currentUser.id);
+    await fetch(SURL+'/rest/v1/likes?post_id=eq.'+postId+'&user_id=eq.'+currentUser.id,
+      {method:'DELETE',headers:{'apikey':SKEY,'Authorization':'Bearer '+tlike}});
     const n=Math.max(0,cur-1);
     if(lbEl){lbEl.classList.remove('lkd');lbEl.setAttribute('onclick',`toggleLike('${postId}','false')`);
       lbEl.innerHTML=`♡ <span id="lc-${postId}">${n}</span>`;}
   } else {
-    await sb.from('likes').insert({post_id:postId,user_id:currentUser.id});
+    await fetch(SURL+'/rest/v1/likes',{method:'POST',
+      headers:{'apikey':SKEY,'Authorization':'Bearer '+tlike,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({post_id:postId,user_id:currentUser.id})});
     const n=cur+1;
     if(lbEl){lbEl.classList.add('lkd');lbEl.setAttribute('onclick',`toggleLike('${postId}','true')`);
       lbEl.innerHTML=`♥ <span id="lc-${postId}">${n}</span>`;}
@@ -804,7 +811,9 @@ async function toggleLike(postId,isLiked){
 
 async function delPost(id){
   if(!currentUser)return;
-  await sb.from('posts').delete().eq('id',id).eq('user_id',currentUser.id);
+  const sd=await sb.auth.getSession();
+  await fetch(SURL+'/rest/v1/posts?id=eq.'+id+'&user_id=eq.'+currentUser.id,
+    {method:'DELETE',headers:{'apikey':SKEY,'Authorization':'Bearer '+(sd.data.session?.access_token||SKEY)}});
   await loadPosts();toast('Deleted.');
 }
 
@@ -911,11 +920,6 @@ async function viewPro(userId){
   if(session){currentUser=session.user;await loadOrCreateProfile(session.user);}
   renderNav();
 })();
-
 </script>
-
-
-
-
 </body>
 </html>
