@@ -144,6 +144,7 @@ function toast(msg) {
 }
 
 // Direct REST API call (no Supabase client lock issues!)
+// Direct REST API call (no Supabase client lock issues!)
 async function restCall(path, options = {}) {
   const headers = {
     'apikey': SKEY,
@@ -153,15 +154,38 @@ async function restCall(path, options = {}) {
     headers['Authorization'] = 'Bearer ' + sessionToken;
   }
   
-  const res = await fetch(SURL + '/rest/v1/' + path, {
-    ...options,
-    headers: headers
-  });
-  
-  if (res.status === 204) return null;
-  const data = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(data));
-  return data;
+  try {
+    const res = await fetch(SURL + '/rest/v1/' + path, {
+      ...options,
+      headers: headers
+    });
+    
+    // Handle empty responses (success with no content)
+    if (res.status === 204) {
+      return { success: true };
+    }
+    
+    // Get response text
+    const text = await res.text();
+    
+    // If empty response and not a GET request, return success
+    if (!text || text.trim() === '') {
+      return options.method === 'GET' ? [] : { success: true };
+    }
+    
+    // Parse JSON
+    const data = JSON.parse(text);
+    
+    // Check for errors
+    if (!res.ok) {
+      throw new Error(data.message || JSON.stringify(data));
+    }
+    
+    return data;
+  } catch (err) {
+    console.error('REST call error:', err);
+    throw err;
+  }
 }
 
 // Navigation
@@ -294,7 +318,6 @@ function updateCharCount() {
   cnt.textContent = ta.value.length + ' / 1000';
   btn.disabled = ta.value.trim().length === 0;
 }
-
 async function publishPost() {
   const ta = document.getElementById('cTA');
   const text = ta.value.trim();
@@ -317,10 +340,10 @@ async function publishPost() {
     ta.value = '';
     updateCharCount();
     await loadPosts();
-    toast('Shared!');
+    toast('✨ Shared!');
   } catch (err) {
-    toast('Error posting');
-    console.error(err);
+    console.error('Post error:', err);
+    toast('Error posting - please try again');
   } finally {
     btn.disabled = false;
     btn.innerHTML = 'Publish';
