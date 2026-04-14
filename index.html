@@ -124,6 +124,8 @@ const sb = supabase.createClient(SURL, SKEY);
 
 let currentUser = null;
 let currentProfile = null;
+let isLoading = false;
+let retryCount = 0;
 
 // Helper functions
 function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -206,26 +208,37 @@ async function doLogout() {
   toast('See you soon');
 }
 
-// Load profile
-async function loadProfile(userId) {
-  const { data } = await sb
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .maybeSingle();
-  
-  if (data) {
-    currentProfile = data;
-  } else {
-    // Create profile if doesn't exist
-    const user = currentUser;
-    const name = user.user_metadata?.full_name || user.email.split('@')[0];
-    const { data: newProfile } = await sb
-      .from('profiles')
-      .insert({ id: user.id, name, email: user.email })
-      .select()
-      .single();
-    currentProfile = newProfile;
+// Load profile with retry
+async function loadProfile(userId, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const { data } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (data) {
+        currentProfile = data;
+        return;
+      } else {
+        const user = currentUser;
+        const name = user.user_metadata?.full_name || user.email.split('@')[0];
+        const { data: newProfile } = await sb
+          .from('profiles')
+          .insert({ id: user.id, name, email: user.email })
+          .select()
+          .single();
+        currentProfile = newProfile;
+        return;
+      }
+    } catch (err) {
+      if (i === retries - 1) {
+        console.error('Failed to load profile:', err);
+        toast('Connection issue, please refresh');
+      }
+      await new Promise(r => setTimeout(r, 500));
+    }
   }
 }
 
@@ -261,114 +274,135 @@ async function publishPost() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
   
-  const { error } = await sb
-    .from('posts')
-    .insert({
-      user_id: currentUser.id,
-      author_name: currentProfile.name || 'Anonymous',
-      content: text
-    });
-  
-  if (error) {
+  try {
+    const { error } = await sb
+      .from('posts')
+      .insert({
+        user_id: currentUser.id,
+        author_name: currentProfile.name || 'Anonymous',
+        content: text
+      });
+    
+    if (error) throw error;
+    
+    ta.value = '';
+    updateCharCount();
+    await loadPosts();
+    toast('Shared!');
+  } catch (err) {
     toast('Error posting');
-    console.error(error);
+    console.error(err);
+  } finally {
     btn.disabled = false;
     btn.innerHTML = 'Publish';
-    return;
   }
-  
-  ta.value = '';
-  updateCharCount();
-  await loadPosts();
-  btn.disabled = false;
-  btn.innerHTML = 'Publish';
-  toast('Shared!');
 }
 
-// Load and display posts
-async function loadPosts() {
+// Load posts with retry and error handling
+async function loadPosts(retries = 3) {
+  if (isLoading) return;
+  isLoading = true;
+  
   const feed = document.getElementById('pFeed');
   feed.innerHTML = '<div class="loading-msg"><span class="spin"></span>Loading feelings...</div>';
   
-  const { data: posts, error } = await sb
-    .from('posts')
-    .select('*')
-    .order('created_at', { ascending: false });
-  
-  if (error) {
-    feed.innerHTML = '<p class="nr">Could not load posts. Refresh the page.</p>';
-    console.error(error);
-    return;
-  }
-  
-  document.getElementById('pCount').textContent = (posts || []).length + ' feelings';
-  
-  if (!posts || posts.length === 0) {
-    feed.innerHTML = '<p class="nr">Nothing yet — be the first to share.</p>';
-    return;
-  }
-  
-  feed.innerHTML = posts.map(post => {
-    const canDelete = currentUser && currentUser.id === post.user_id;
-    return `
-      <div class="post" id="post-${post.id}">
-        <div class="p-hd">
-          <div class="av">${(post.author_name || '?')[0]}</div>
-          <div class="p-meta">
-            <button class="p-auth">${esc(post.author_name || 'Anonymous')}</button>
-            <div class="p-time">${timeAgo(post.created_at)}</div>
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const { data: posts, error } = await sb
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      document.getElementById('pCount').textContent = (posts || []).length + ' feelings';
+      
+      if (!posts || posts.length === 0) {
+        feed.innerHTML = '<p class="nr">Nothing yet — be the first to share.</p>';
+        isLoading = false;
+        return;
+      }
+      
+      feed.innerHTML = posts.map(post => {
+        const canDelete = currentUser && currentUser.id === post.user_id;
+        return `
+          <div class="post" id="post-${post.id}">
+            <div class="p-hd">
+              <div class="av">${(post.author_name || '?')[0]}</div>
+              <div class="p-meta">
+                <button class="p-auth">${esc(post.author_name || 'Anonymous')}</button>
+                <div class="p-time">${timeAgo(post.created_at)}</div>
+              </div>
+            </div>
+            <div class="p-body">${esc(post.content)}</div>
+            <div class="p-acts">
+              <button class="pa" onclick="toggleComments('${post.id}')">💬 <span id="cc-${post.id}">0</span> replies</button>
+              ${canDelete ? `<button class="pa" onclick="deletePost('${post.id}')" style="color:var(--danger);">Delete</button>` : ''}
+            </div>
+            <div class="cmts-wrap" id="cmw-${post.id}">
+              <div class="cmts-inner" id="cmi-${post.id}">
+                <div class="loading-msg" style="padding:20px;"><span class="spin"></span> Loading replies...</div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="p-body">${esc(post.content)}</div>
-        <div class="p-acts">
-          <button class="pa" onclick="toggleComments('${post.id}')">💬 <span id="cc-${post.id}">0</span> replies</button>
-          ${canDelete ? `<button class="pa" onclick="deletePost('${post.id}')" style="color:var(--danger);">Delete</button>` : ''}
-        </div>
-        <div class="cmts-wrap" id="cmw-${post.id}">
-          <div class="cmts-inner" id="cmi-${post.id}">
-            <div class="loading-msg" style="padding:20px;"><span class="spin"></span> Loading replies...</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  // Load comments for each post
-  for (let post of posts) {
-    loadCommentsForPost(post.id);
+        `;
+      }).join('');
+      
+      // Load comments for each post
+      for (let post of posts) {
+        loadCommentsForPost(post.id);
+      }
+      
+      isLoading = false;
+      return;
+      
+    } catch (err) {
+      console.error(`Attempt ${attempt + 1} failed:`, err);
+      if (attempt === retries - 1) {
+        feed.innerHTML = '<p class="nr">Could not load posts. <button onclick="location.reload()" style="background:var(--accent);color:#0D0C0B;border:none;padding:8px 16px;border-radius:2px;cursor:pointer;margin-top:16px;">Retry</button></p>';
+        isLoading = false;
+        return;
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
   }
+  isLoading = false;
 }
 
 async function loadCommentsForPost(postId) {
-  const { data: comments, error } = await sb
-    .from('comments')
-    .select('*')
-    .eq('post_id', postId)
-    .order('created_at', { ascending: true });
-  
-  const commentCount = document.getElementById(`cc-${postId}`);
-  if (commentCount) commentCount.textContent = comments?.length || 0;
-  
-  const inner = document.getElementById(`cmi-${postId}`);
-  if (!inner) return;
-  
-  if (error || !comments || comments.length === 0) {
-    inner.innerHTML = `<p class="no-cmt">No replies yet...</p>
-      ${currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply..." onkeypress="if(event.key==='Enter')addComment('${postId}')"><button class="btn-cmt" onclick="addComment('${postId}')">Send</button></div>` : '<p class="sign-cmt"><a onclick="openModal(\'loginModal\')">Sign in</a> to reply</p>'}`;
-    return;
-  }
-  
-  const list = comments.map(c => `
-    <div class="cmt">
-      <div class="cmt-hd">
-        <span class="cmt-auth">${esc(c.author_name)}</span>
-        <span class="cmt-time">${timeAgo(c.created_at)}</span>
+  try {
+    const { data: comments, error } = await sb
+      .from('comments')
+      .select('*')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+    
+    const commentCount = document.getElementById(`cc-${postId}`);
+    if (commentCount) commentCount.textContent = comments?.length || 0;
+    
+    const inner = document.getElementById(`cmi-${postId}`);
+    if (!inner) return;
+    
+    if (error || !comments || comments.length === 0) {
+      inner.innerHTML = `<p class="no-cmt">No replies yet...</p>
+        ${currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply..." onkeypress="if(event.key==='Enter')addComment('${postId}')"><button class="btn-cmt" onclick="addComment('${postId}')">Send</button></div>` : '<p class="sign-cmt"><a onclick="openModal(\'loginModal\')">Sign in</a> to reply</p>'}`;
+      return;
+    }
+    
+    const list = comments.map(c => `
+      <div class="cmt">
+        <div class="cmt-hd">
+          <span class="cmt-auth">${esc(c.author_name)}</span>
+          <span class="cmt-time">${timeAgo(c.created_at)}</span>
+        </div>
+        <div class="cmt-body">${esc(c.text)}</div>
       </div>
-      <div class="cmt-body">${esc(c.text)}</div>
-    </div>
-  `).join('');
-  
-  inner.innerHTML = list + (currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply..." onkeypress="if(event.key==='Enter')addComment('${postId}')"><button class="btn-cmt" onclick="addComment('${postId}')">Send</button></div>` : '<p class="sign-cmt"><a onclick="openModal(\'loginModal\')">Sign in</a> to reply</p>');
+    `).join('');
+    
+    inner.innerHTML = list + (currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply..." onkeypress="if(event.key==='Enter')addComment('${postId}')"><button class="btn-cmt" onclick="addComment('${postId}')">Send</button></div>` : '<p class="sign-cmt"><a onclick="openModal(\'loginModal\')">Sign in</a> to reply</p>');
+  } catch (err) {
+    console.error('Error loading comments:', err);
+  }
 }
 
 function toggleComments(postId) {
@@ -384,50 +418,54 @@ async function addComment(postId) {
   
   input.disabled = true;
   
-  const { error } = await sb
-    .from('comments')
-    .insert({
-      post_id: postId,
-      user_id: currentUser.id,
-      author_name: currentProfile?.name || 'Anonymous',
-      text: text
-    });
-  
-  input.disabled = false;
-  
-  if (error) { toast('Could not post reply'); return; }
-  
-  input.value = '';
-  await loadCommentsForPost(postId);
-  
-  // Update reply count
-  const { count } = await sb
-    .from('comments')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', postId);
-  
-  const commentCount = document.getElementById(`cc-${postId}`);
-  if (commentCount) commentCount.textContent = count || 0;
-  
-  toast('Replied');
+  try {
+    const { error } = await sb
+      .from('comments')
+      .insert({
+        post_id: postId,
+        user_id: currentUser.id,
+        author_name: currentProfile?.name || 'Anonymous',
+        text: text
+      });
+    
+    if (error) throw error;
+    
+    input.value = '';
+    await loadCommentsForPost(postId);
+    
+    const { count } = await sb
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+    
+    const commentCount = document.getElementById(`cc-${postId}`);
+    if (commentCount) commentCount.textContent = count || 0;
+    
+    toast('Replied');
+  } catch (err) {
+    toast('Could not post reply');
+  } finally {
+    input.disabled = false;
+  }
 }
 
 async function deletePost(postId) {
   if (!confirm('Delete this feeling?')) return;
   
-  const { error } = await sb
-    .from('posts')
-    .delete()
-    .eq('id', postId)
-    .eq('user_id', currentUser.id);
-  
-  if (error) {
+  try {
+    const { error } = await sb
+      .from('posts')
+      .delete()
+      .eq('id', postId)
+      .eq('user_id', currentUser.id);
+    
+    if (error) throw error;
+    
+    await loadPosts();
+    toast('Deleted');
+  } catch (err) {
     toast('Could not delete');
-    return;
   }
-  
-  await loadPosts();
-  toast('Deleted');
 }
 
 // Auth state listener
