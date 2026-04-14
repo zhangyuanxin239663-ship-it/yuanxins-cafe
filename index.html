@@ -2,363 +2,250 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>yuanxin's café · pinboard</title>
-  <!-- Fonts: elegant serif + clean sans -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>yuanxin's café · drifting notes</title>
+  <!-- Fonts: pure elegance + modern weight -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      user-select: none; /* avoid accidental text selection while dragging */
     }
 
     body {
       background-color: #0a0908;
       font-family: 'Inter', sans-serif;
-      color: #ece8e0;
       overflow-x: hidden;
+      height: 100vh;
     }
 
-    /* --- parallax background (gentle movement) --- */
-    .parallax-bg {
-      position: fixed;
-      top: -5%;
-      left: -5%;
-      width: 110%;
-      height: 110%;
-      background-image: url('bg.jpg');
-      background-size: cover;
-      background-position: center;
-      filter: brightness(0.82) contrast(1.08);
-      transition: transform 0.12s ease-out;
-      will-change: transform;
-      z-index: -2;
-    }
-
-    .overlay-dark {
+    /* --- CLOUD PARALLAX: zoom & move on cursor --- */
+    .cloud-bg {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 50% 30%, rgba(10,9,8,0.3) 0%, rgba(10,9,8,0.75) 100%);
-      z-index: -1;
+      background-image: url('bg.jpg');
+      background-size: cover;
+      background-position: center 30%;
+      filter: brightness(0.88) contrast(1.05);
+      transition: transform 0.08s ease-out;
+      will-change: transform;
+      z-index: -2;
+      transform-origin: center center;
     }
 
-    /* --- minimal nav (no login buttons) --- */
-    nav {
+    .dark-veil {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      padding: 24px 36px;
-      display: flex;
-      justify-content: flex-end;
-      z-index: 50;
-      backdrop-filter: blur(6px);
-      background: rgba(10,9,8,0.2);
-      pointer-events: none;
-    }
-    .nav-placeholder {
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, rgba(10,9,8,0.2) 0%, rgba(10,9,8,0.65) 100%);
+      z-index: -1;
       pointer-events: none;
     }
 
-    /* --- pages --- */
+    /* pages */
     .page {
       display: none;
-      min-height: 100vh;
       width: 100%;
+      min-height: 100vh;
+      position: relative;
     }
     .page.active {
       display: block;
     }
 
-    /* --- HOME: monumental typography + click --- */
-    .hero {
+    /* ========== HOME: ONLY ONE ROW, MASSIVE, FULL SCREEN ========== */
+    .hero-home {
       height: 100vh;
+      width: 100%;
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: center;
-      padding-top: 28vh;
       cursor: pointer;
     }
-    .monumental-title {
+    .monumental {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(68px, 12vw, 170px);
-      font-weight: 600;
+      font-size: clamp(88px, 14vw, 210px);
+      font-weight: 700;
       letter-spacing: -0.02em;
       text-align: center;
-      line-height: 1.08;
-      transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-      background: linear-gradient(135deg, #f3e9d2 0%, #e2cfaa 100%);
+      line-height: 1.02;
+      background: linear-gradient(135deg, #fef3df 0%, #e9d5aa 100%);
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
+      text-shadow: 0 2px 15px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      transition: transform 0.2s ease;
     }
-    .monumental-title:hover {
-      transform: scale(1.02);
-    }
-
-    /* --- POSTCARD WALL (no heading, just + button) --- */
-    .wall-wrap {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 130px 40px 100px 40px;
-    }
-    .post-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-      gap: 36px;
-      margin-top: 20px;
+    .monumental:hover {
+      transform: scale(1.01);
     }
 
-    /* individual postcard */
-    .postcard {
-      background: #fffef7;
-      border-radius: 24px;
-      padding: 0;
-      transition: all 0.25s ease;
-      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.35);
+    /* ========== SUBPAGE: ORGANIC STICKY WALL (draggable notes) ========== */
+    .wall-container {
       position: relative;
-      transform: rotate(var(--rot, 0deg));
-      display: flex;
-      flex-direction: column;
+      min-height: 100vh;
+      width: 100%;
+      padding: 40px 40px 120px 40px;
+      background: transparent;
     }
-    .postcard:hover {
-      transform: translateY(-6px) rotate(0deg);
-      box-shadow: 0 28px 40px -16px rgba(0,0,0,0.5);
-    }
-    /* color variants (12 colors) */
-    .postcard.cream { background: #fffef5; }
-    .postcard.ivory { background: #fef7e8; }
-    .postcard.mint { background: #f2f9f2; }
-    .postcard.lavender { background: #f8f3fc; }
-    .postcard.peach { background: #fff2e6; }
-    .postcard.sky { background: #eef5ff; }
-    .postcard.rose { background: #fff0f2; }
-    .postcard.butter { background: #fff8e0; }
-    .postcard.seafoam { background: #e9f4ef; }
-    .postcard.terracotta { background: #fceaea; }
-    .postcard.mauve { background: #f5ecf0; }
-    .postcard.citrus { background: #fff7e0; }
 
-    .pin {
+    /* each note is absolutely positioned → random arrangement */
+    .sticky-note {
       position: absolute;
-      top: -12px;
+      min-width: 240px;
+      max-width: 340px;
+      background: #fffef7;
+      border-radius: 28px;
+      padding: 0;
+      box-shadow: 0 18px 28px -12px rgba(0,0,0,0.35);
+      transition: box-shadow 0.2s, transform 0.05s linear;
+      cursor: grab;
+      z-index: 10;
+      backdrop-filter: blur(1px);
+      will-change: left, top;
+    }
+    .sticky-note:active {
+      cursor: grabbing;
+      box-shadow: 0 24px 38px -14px rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    /* paper color variants (10+ colors) */
+    .note-cream { background: #fffef5; }
+    .note-ivory { background: #fef7e8; }
+    .note-mint { background: #f2f9f2; }
+    .note-lavender { background: #f8f3fc; }
+    .note-peach { background: #fff2e6; }
+    .note-sky { background: #eef5ff; }
+    .note-rose { background: #fff0f2; }
+    .note-butter { background: #fff8e0; }
+    .note-seafoam { background: #e9f4ef; }
+    .note-terracotta { background: #fceaea; }
+    .note-mauve { background: #f5ecf0; }
+    .note-citrus { background: #fff7e0; }
+
+    .pin-icon {
+      position: absolute;
+      top: -14px;
       left: 50%;
       transform: translateX(-50%);
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       background: radial-gradient(circle, #e0b57a, #b87c4f);
       border-radius: 50%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 3;
-      border: 1px solid rgba(255,215,150,0.6);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      z-index: 12;
+      border: 1px solid rgba(255,210,130,0.7);
+      pointer-events: none;
     }
-    .card-inner {
-      padding: 28px 24px 24px 24px;
+
+    .note-inner {
+      padding: 28px 20px 20px 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
-    .post-content {
+
+    .note-text {
       font-size: 17px;
       line-height: 1.45;
       word-break: break-word;
-      font-family: var(--post-font, 'Inter');
+      font-family: var(--note-font, 'Inter');
       font-weight: 400;
       color: #1f1e1a;
     }
-    /* font styles */
-    .post-content.serif { font-family: 'Playfair Display', serif; font-weight: 450; }
-    .post-content.sans { font-family: 'Inter', sans-serif; font-weight: 400; }
-    .post-content.modern { font-family: 'Playfair Display', serif; font-weight: 500; }
-    .post-content.wavy { font-family: 'Inter', sans-serif; font-style: italic; }
+    .note-text.serif { font-family: 'Playfair Display', serif; font-weight: 450; }
+    .note-text.sans { font-family: 'Inter', sans-serif; font-weight: 400; }
+    .note-text.modern { font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: -0.2px; }
+    .note-text.wavy { font-family: 'Inter', sans-serif; font-style: italic; }
 
-    .post-meta {
+    .note-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-top: 1px solid rgba(0,0,0,0.08);
-      margin-top: 8px;
-      padding-top: 14px;
-      font-size: 11px;
+      padding-top: 12px;
+      font-size: 10px;
       letter-spacing: 0.3px;
       color: #5f5b4e;
       text-transform: uppercase;
     }
-    .author-name {
+    .note-author {
       font-weight: 700;
       color: #b48c48;
+      background: none;
+      border: none;
+      font-size: 10px;
       cursor: pointer;
+    }
+    .delete-note {
       background: none;
       border: none;
       font-size: 11px;
-    }
-    .delete-btn {
-      background: none;
-      border: none;
-      font-size: 12px;
       color: #aa7a5c;
       cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 50px;
-    }
-    .delete-btn:hover { background: #f2e3d4; color: #bc5a3c; }
-
-    /* floating + button (always visible, triggers login if needed) */
-    .floating-add {
-      position: fixed;
-      bottom: 32px;
-      right: 32px;
-      width: 68px;
-      height: 68px;
-      background: #c8aa6e;
-      border-radius: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
-      transition: all 0.2s;
-      z-index: 90;
-      font-size: 38px;
-      font-weight: 300;
-      color: #0a0908;
-      border: none;
-    }
-    .floating-add:hover { transform: scale(1.05); background: #e2bc7c; }
-
-    /* --- MODAL: compose + color palette (10+ colors) --- */
-    .modal-card {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(5,4,3,0.88);
-      backdrop-filter: blur(12px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
-    .modal-card.open { display: flex; }
-    .modal-inner {
-      background: #1e1b16;
-      max-width: 560px;
-      width: 90%;
+      padding: 2px 8px;
       border-radius: 40px;
-      padding: 32px;
-      border: 1px solid rgba(200,170,110,0.4);
-      box-shadow: 0 30px 40px rgba(0,0,0,0.5);
     }
-    .modal-inner h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 28px;
-      margin-bottom: 16px;
-    }
-    .color-palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin: 20px 0 16px;
-    }
-    .color-chip {
-      width: 46px;
-      height: 46px;
-      border-radius: 60px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: 0.1s;
-    }
-    .color-chip.cream { background: #fffef5; }
-    .color-chip.ivory { background: #fef7e8; }
-    .color-chip.mint { background: #f2f9f2; }
-    .color-chip.lavender { background: #f8f3fc; }
-    .color-chip.peach { background: #fff2e6; }
-    .color-chip.sky { background: #eef5ff; }
-    .color-chip.rose { background: #fff0f2; }
-    .color-chip.butter { background: #fff8e0; }
-    .color-chip.seafoam { background: #e9f4ef; }
-    .color-chip.terracotta { background: #fceaea; }
-    .color-chip.mauve { background: #f5ecf0; }
-    .color-chip.citrus { background: #fff7e0; }
-    .color-chip.active { border-color: #c8aa6e; transform: scale(1.07); }
+    .delete-note:hover { background: #f2e3d4; color: #bc5a3c; }
 
-    .font-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin: 12px 0 8px;
-    }
-    .font-option {
-      background: #2b2822;
-      padding: 8px 16px;
-      border-radius: 60px;
-      font-size: 13px;
-      cursor: pointer;
-      color: #ece8e0;
-    }
-    .font-option.active { background: #c8aa6e; color: #0a0908; }
-    textarea {
-      width: 100%;
-      background: #2b2822;
-      border: 1px solid #4a443a;
-      padding: 14px;
-      color: #f2ede4;
-      font-size: 16px;
-      border-radius: 24px;
-      font-family: 'Inter', sans-serif;
-      resize: vertical;
-      margin: 12px 0;
-    }
-    .publish-btn {
-      width: 100%;
-      background: #c8aa6e;
-      border: none;
-      padding: 14px;
-      font-weight: 600;
-      border-radius: 44px;
-      margin-top: 12px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .close-modal {
+    /* ---- THE "+" NOTE (always present, looks like a sticky, triggers login or compose) ---- */
+    .add-note {
       position: absolute;
-      top: 18px;
-      right: 24px;
-      font-size: 28px;
+      background: #e6ddcd;
+      box-shadow: 0 18px 28px -12px rgba(0,0,0,0.3);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      color: #b9aa8c;
+      transition: all 0.2s;
+      z-index: 100;
+      backdrop-filter: blur(2px);
+    }
+    .add-note:hover {
+      transform: scale(1.02);
+      background: #f5ecd9;
+    }
+    .add-plus {
+      font-size: 48px;
+      font-weight: 300;
+      color: #6a5a44;
     }
 
-    /* inline login / profile drawer (simple) */
+    /* small drawer (login / profile) */
     .user-drawer {
       position: fixed;
-      bottom: 120px;
-      right: 32px;
-      background: #1a1814;
+      bottom: 28px;
+      left: 28px;
+      background: #1e1b16ee;
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(200,170,110,0.4);
-      border-radius: 32px;
+      border: 1px solid rgba(200,170,110,0.5);
+      border-radius: 36px;
       padding: 18px 22px;
-      width: 260px;
-      z-index: 95;
+      width: 270px;
+      z-index: 200;
       display: none;
       flex-direction: column;
       gap: 12px;
-      box-shadow: 0 20px 30px rgba(0,0,0,0.4);
+      font-family: 'Inter', sans-serif;
     }
     .user-drawer.open { display: flex; }
     .drawer-name {
-      font-weight: 600;
-      font-size: 18px;
       font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 500;
     }
-    .edit-info {
+    .edit-btn, .logout-action {
       background: rgba(200,170,110,0.2);
       border: none;
       padding: 8px;
@@ -367,18 +254,13 @@
       cursor: pointer;
       font-size: 12px;
     }
-    .logout-btn {
-      background: #3e2c22;
+    .login-input {
+      background: #2b2822;
       border: none;
-      padding: 8px;
+      padding: 10px;
       border-radius: 40px;
-      color: #f3cd9b;
-      cursor: pointer;
-    }
-    .login-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      color: #ece8e0;
+      margin-bottom: 6px;
     }
     .login-small-btn {
       background: #c8aa6e;
@@ -388,64 +270,55 @@
       font-weight: 600;
       cursor: pointer;
     }
-
+    .toast-msg {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f1c17;
+      padding: 8px 20px;
+      border-radius: 60px;
+      font-size: 13px;
+      z-index: 300;
+      pointer-events: none;
+      opacity: 0;
+      transition: 0.1s;
+      color: #e2cfaa;
+    }
     @media (max-width: 680px) {
-      .wall-wrap { padding: 110px 20px 80px; }
-      .floating-add { width: 56px; height: 56px; font-size: 32px; bottom: 24px; right: 24px; }
-      .user-drawer { right: 20px; bottom: 100px; width: 240px; }
+      .wall-container { padding: 30px 20px 100px 20px; }
+      .sticky-note { min-width: 200px; }
+      .user-drawer { left: 16px; bottom: 16px; width: 240px; padding: 14px; }
     }
   </style>
 </head>
 <body>
 
-<div class="parallax-bg" id="parallaxBg"></div>
-<div class="overlay-dark"></div>
+<div class="cloud-bg" id="cloudBg"></div>
+<div class="dark-veil"></div>
 
-<!-- HOME PAGE -->
+<!-- HOME PAGE : ONLY "yuanxin's café" massive, single row -->
 <div class="page active" id="homePage">
-  <div class="hero" id="homeHero">
-    <div class="monumental-title">yuanxin’s<br>café</div>
+  <div class="hero-home" id="homeTrigger">
+    <div class="monumental">yuanxin’s café</div>
   </div>
 </div>
 
-<!-- POSTCARD WALL PAGE (no heading) -->
+<!-- SUB PAGE : wall of draggable notes -->
 <div class="page" id="feelingsPage">
-  <div class="wall-wrap">
-    <div class="post-grid" id="pFeed"></div>
-  </div>
+  <div class="wall-container" id="wallContainer"></div>
 </div>
 
-<!-- floating + button -->
-<button class="floating-add" id="addPostBtn">+</button>
-
-<!-- small user drawer (login / profile) -->
+<!-- floating drawer (login/profile) -->
 <div class="user-drawer" id="userDrawer">
-  <div id="drawerContent"></div>
+  <div id="drawerDynamic"></div>
 </div>
 
-<!-- MODAL for creating postcard -->
-<div class="modal-card" id="postModal">
-  <div class="modal-inner">
-    <span class="close-modal" onclick="closeModal('postModal')">&times;</span>
-    <h3>✧ pin a thought</h3>
-    <textarea id="newPostText" rows="3" placeholder="what’s on your mind?"></textarea>
-    
-    <div style="font-size: 13px;">choose paper color</div>
-    <div class="color-palette" id="colorPalette"></div>
+<div class="toast-msg" id="liveToast"></div>
 
-    <div style="font-size: 13px;">font style</div>
-    <div class="font-row" id="fontOptions">
-      <div class="font-option" data-font="serif">Serif</div>
-      <div class="font-option" data-font="sans">Sans</div>
-      <div class="font-option" data-font="modern">Modern</div>
-      <div class="font-option" data-font="wavy">Italic</div>
-    </div>
-    <button class="publish-btn" id="doPublishBtn">✧ pin to wall ✧</button>
-  </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ---------- SUPABASE CONFIG (REST + AUTH) ----------
+  // ----------------------------- SUPABASE SETUP ---------------------------------
   const SURL = 'https://kjgeitgrvljrqblbrcet.supabase.co';
   const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZ2VpdGdydmxqcnFibGJyY2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTUyNDAsImV4cCI6MjA5MDY5MTI0MH0.WcWqqXlNAW0CycEnMNkgkKeAUVqMx-FES0cl_Bjucvw';
   const sb = supabase.createClient(SURL, SKEY);
@@ -454,20 +327,15 @@
   let currentProfile = null;
   let sessionToken = null;
 
-  // helpers
-  function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function timeAgo(ts) {
-    const d = Date.now() - new Date(ts).getTime();
-    const m = Math.floor(d/60000);
-    if(m<1) return 'just now';
-    if(m<60) return m+'m ago';
-    const h = Math.floor(m/60);
-    if(h<24) return h+'h ago';
-    return Math.floor(h/24)+'d ago';
+  // helper ui
+  function toastMsg(msg) {
+    const t = document.getElementById('liveToast');
+    t.textContent = msg;
+    t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2200);
   }
-  function toast(msg) { alert(msg); }
 
-  // direct REST call
+  // ----- REST (bypass lock issues) -----
   async function restCall(path, options = {}) {
     const headers = { 'apikey': SKEY, 'Content-Type': 'application/json' };
     if (sessionToken) headers['Authorization'] = 'Bearer ' + sessionToken;
@@ -496,7 +364,7 @@
     if (!currentUser) return;
     try {
       const data = await restCall(`profiles?id=eq.${currentUser.id}&limit=1`);
-      if (data && data[0]) { currentProfile = data[0]; }
+      if (data && data[0]) currentProfile = data[0];
       else {
         const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
         await restCall('profiles', { method: 'POST', body: JSON.stringify({ id: currentUser.id, name, email: currentUser.email }) });
@@ -505,197 +373,322 @@
     } catch(e) { console.warn(e); }
   }
 
-  // ----- DRAWER (login / profile) -----
+  // ---------- DRAWER : LOGIN / PROFILE (simple, no avatar) ----------
   function renderDrawer() {
-    const container = document.getElementById('drawerContent');
+    const container = document.getElementById('drawerDynamic');
     if (!container) return;
     if (currentUser && currentProfile) {
       container.innerHTML = `
-        <div class="drawer-name">☕ ${esc(currentProfile.name || 'visitor')}</div>
-        <button class="edit-info" id="editProfileBtn">edit info</button>
-        <button class="logout-btn" id="drawerLogoutBtn">log out</button>
+        <div class="drawer-name">☕ ${escapeHtml(currentProfile.name || 'guest')}</div>
+        <button class="edit-btn" id="editProfileBtn">edit name</button>
+        <button class="logout-action" id="logoutBtn">log out</button>
       `;
-      document.getElementById('editProfileBtn')?.addEventListener('click', () => openEditProfile());
-      document.getElementById('drawerLogoutBtn')?.addEventListener('click', () => doLogout());
+      document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
+        const newName = prompt('edit your display name', currentProfile.name);
+        if (newName && newName.trim() && currentUser) {
+          await restCall(`profiles?id=eq.${currentUser.id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) });
+          await loadProfile();
+          renderDrawer();
+          toastMsg('name updated');
+          if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
+        }
+      });
+      document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        await sb.auth.signOut();
+        sessionToken = null; currentUser = null; currentProfile = null;
+        renderDrawer();
+        document.getElementById('userDrawer').classList.remove('open');
+        if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
+        toastMsg('logged out');
+      });
     } else {
       container.innerHTML = `
-        <div class="login-buttons">
-          <input type="email" id="drawerEmail" placeholder="email" style="background:#2b2822; border:none; padding:8px; border-radius:40px; color:#ece8e0;">
-          <input type="password" id="drawerPass" placeholder="password" style="background:#2b2822; border:none; padding:8px; border-radius:40px;">
-          <button class="login-small-btn" id="drawerLoginBtn">log in</button>
-          <div style="text-align:center; font-size:12px;">── or ──</div>
-          <button class="login-small-btn" id="drawerGoogleBtn">google</button>
-          <button class="edit-info" id="drawerRegisterBtn">create account</button>
-        </div>
+        <input class="login-input" type="email" id="drawerEmail" placeholder="email">
+        <input class="login-input" type="password" id="drawerPass" placeholder="password">
+        <button class="login-small-btn" id="drawerLoginBtn">log in</button>
+        <div style="text-align:center; font-size:11px; margin:4px 0;">or</div>
+        <button class="login-small-btn" id="drawerGoogleBtn">continue with google</button>
+        <button class="edit-btn" id="drawerRegisterBtn">create account</button>
       `;
-      document.getElementById('drawerLoginBtn')?.addEventListener('click', () => drawerLogin());
+      document.getElementById('drawerLoginBtn')?.addEventListener('click', drawerLogin);
       document.getElementById('drawerGoogleBtn')?.addEventListener('click', () => googleLogin());
-      document.getElementById('drawerRegisterBtn')?.addEventListener('click', () => openRegisterModal());
+      document.getElementById('drawerRegisterBtn')?.addEventListener('click', openRegisterModal);
     }
   }
 
   async function drawerLogin() {
-    const email = document.getElementById('drawerEmail').value.trim();
-    const pass = document.getElementById('drawerPass').value;
-    if (!email || !pass) { toast('enter email & password'); return; }
+    const email = document.getElementById('drawerEmail')?.value.trim();
+    const pass = document.getElementById('drawerPass')?.value;
+    if (!email || !pass) { toastMsg('enter email/password'); return; }
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if (error) { toast(error.message); return; }
+    if (error) { toastMsg(error.message); return; }
     await updateSession();
     renderDrawer();
-    if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts();
+    if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
+    toastMsg(`welcome, ${currentProfile?.name || ''}`);
   }
 
   async function googleLogin() {
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
-    if (error) toast(error.message);
-  }
-
-  async function doLogout() {
-    await sb.auth.signOut();
-    sessionToken = null; currentUser = null; currentProfile = null;
-    renderDrawer();
-    document.getElementById('userDrawer').classList.remove('open');
-    if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts();
+    if (error) toastMsg(error.message);
   }
 
   function openRegisterModal() {
-    const name = prompt("first name");
-    const last = prompt("last name (optional)");
-    const email = prompt("email");
-    const pass = prompt("password (min 6)");
-    if (!name || !email || !pass || pass.length<6) { toast("invalid"); return; }
-    const fullName = name + (last ? ' '+last : '');
+    const first = prompt('first name');
+    if (!first) return;
+    const last = prompt('last name (optional)') || '';
+    const email = prompt('email');
+    if (!email) return;
+    const pass = prompt('password (min 6 characters)');
+    if (!pass || pass.length < 6) { toastMsg('password too short'); return; }
+    const fullName = first + (last ? ' ' + last : '');
     sb.auth.signUp({ email, password: pass, options: { data: { full_name: fullName } } })
-      .then(({ error }) => { if(error) toast(error.message); else toast("account created! log in"); });
+      .then(({ error }) => { if(error) toastMsg(error.message); else toastMsg('account created! please log in'); });
   }
 
-  function openEditProfile() {
-    const newName = prompt("edit your name", currentProfile?.name || '');
-    if (newName && newName.trim() && currentUser) {
-      restCall(`profiles?id=eq.${currentUser.id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) })
-        .then(() => { loadProfile(); renderDrawer(); toast("profile updated"); });
+  // ----- STICKY NOTES : draggable + random placement + wall -----
+  let notesArray = [];     // store DOM ids + data
+  let dragActive = false;
+  let currentDragElement = null;
+  let dragStartX = 0, dragStartY = 0;
+  let initialLeft = 0, initialTop = 0;
+
+  function makeDraggable(el) {
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.delete-note')) return;
+      e.preventDefault();
+      dragActive = true;
+      currentDragElement = el;
+      const rect = el.getBoundingClientRect();
+      const containerRect = document.getElementById('wallContainer').getBoundingClientRect();
+      initialLeft = rect.left - containerRect.left;
+      initialTop = rect.top - containerRect.top;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      el.style.cursor = 'grabbing';
+      el.style.zIndex = '1000';
+    });
+  }
+
+  window.addEventListener('mousemove', (e) => {
+    if (!dragActive || !currentDragElement) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    let newLeft = initialLeft + dx;
+    let newTop = initialTop + dy;
+    const container = document.getElementById('wallContainer');
+    const maxLeft = container.clientWidth - currentDragElement.offsetWidth;
+    const maxTop = container.clientHeight - currentDragElement.offsetHeight;
+    newLeft = Math.min(Math.max(0, newLeft), maxLeft);
+    newTop = Math.min(Math.max(0, newTop), maxTop);
+    currentDragElement.style.left = newLeft + 'px';
+    currentDragElement.style.top = newTop + 'px';
+    currentDragElement.style.position = 'absolute';
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (dragActive && currentDragElement) {
+      currentDragElement.style.cursor = 'grab';
+      currentDragElement.style.zIndex = '';
+      dragActive = false;
+      currentDragElement = null;
     }
+  });
+
+  // generate random positions inside wallContainer
+  function randomPosition(element, index) {
+    const container = document.getElementById('wallContainer');
+    if (!container) return { left: 20, top: 20 };
+    const maxW = Math.max(container.clientWidth - element.offsetWidth, 120);
+    const maxH = Math.max(container.clientHeight - element.offsetHeight, 280);
+    // use deterministic offset + perlin chaos
+    const seed = (index * 131) % 1000;
+    const left = (seed * 17) % maxW;
+    const top = ((seed * 43) % maxH) + 30;
+    return { left: Math.min(maxW-20, left), top: Math.min(maxH-40, top) };
   }
 
-  // ---- POSTCARD WALL (no heading, + button, drawer toggles) ----
-  async function loadPosts() {
-    const feed = document.getElementById('pFeed');
-    feed.innerHTML = '<div style="text-align:center; padding:60px;">loading postcards...</div>';
+  async function loadAllNotes() {
+    const container = document.getElementById('wallContainer');
+    if (!container) return;
+    container.innerHTML = ''; // clear
     try {
       const posts = await restCall('posts?order=created_at.desc');
-      if (!posts || posts.length === 0) { feed.innerHTML = '<div style="text-align:center; padding:60px;">no postcards yet. pin the first ✦</div>'; return; }
-      feed.innerHTML = posts.map(post => {
-        const canDelete = currentUser && currentUser.id === post.user_id;
-        const randomRot = (Math.random() * 2 - 1) * 1.2;
-        const colorClass = post.card_color || 'cream';
-        const fontClass = post.font_style || 'serif';
-        return `
-          <div class="postcard ${colorClass}" style="--rot: ${randomRot}deg;">
-            <div class="pin"></div>
-            <div class="card-inner">
-              <div class="post-content ${fontClass}">${esc(post.content)}</div>
-              <div class="post-meta">
-                <button class="author-name" data-user="${post.user_id}">${esc(post.author_name || 'anonymous')}</button>
-                <span>${timeAgo(post.created_at)}</span>
-                ${canDelete ? `<button class="delete-btn" data-id="${post.id}">✕ delete</button>` : ''}
-              </div>
+      const notes = posts || [];
+      // create each sticky note
+      notes.forEach((note, idx) => {
+        const canDelete = currentUser && currentUser.id === note.user_id;
+        const colorClass = note.card_color || 'cream';
+        const fontClass = note.font_style || 'serif';
+        const noteDiv = document.createElement('div');
+        noteDiv.className = `sticky-note note-${colorClass}`;
+        noteDiv.setAttribute('data-id', note.id);
+        noteDiv.innerHTML = `
+          <div class="pin-icon"></div>
+          <div class="note-inner">
+            <div class="note-text ${fontClass}">${escapeHtml(note.content)}</div>
+            <div class="note-footer">
+              <button class="note-author" data-author="${note.user_id}">${escapeHtml(note.author_name || 'anonymous')}</button>
+              <span>${timeAgo(note.created_at)}</span>
+              ${canDelete ? `<button class="delete-note" data-del="${note.id}">✕</button>` : ''}
             </div>
           </div>
         `;
-      }).join('');
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => { e.stopPropagation(); deletePost(btn.dataset.id); });
+        container.appendChild(noteDiv);
+        const pos = randomPosition(noteDiv, idx);
+        noteDiv.style.position = 'absolute';
+        noteDiv.style.left = pos.left + 'px';
+        noteDiv.style.top = pos.top + 'px';
+        noteDiv.style.cursor = 'grab';
+        makeDraggable(noteDiv);
+        // delete event
+        noteDiv.querySelector('.delete-note')?.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!currentUser) { toastMsg('log in to delete'); return; }
+          if (confirm('remove this note?')) {
+            await restCall(`posts?id=eq.${note.id}&user_id=eq.${currentUser.id}`, { method: 'DELETE' });
+            loadAllNotes();
+            toastMsg('note removed');
+          }
+        });
+        noteDiv.querySelector('.note-author')?.addEventListener('click', () => {
+          toastMsg(`✧ by ${escapeHtml(note.author_name || 'anonymous')}`);
+        });
       });
-      document.querySelectorAll('.author-name').forEach(btn => {
-        btn.addEventListener('click', () => { alert("author info – simple mode"); });
+      // ---- THE "+" NOTE (inside the wall, like a sticky note) ----
+      const addSticky = document.createElement('div');
+      addSticky.className = 'sticky-note add-note';
+      addSticky.style.background = '#f9f2e2';
+      addSticky.style.display = 'flex';
+      addSticky.style.alignItems = 'center';
+      addSticky.style.justifyContent = 'center';
+      addSticky.style.minWidth = '140px';
+      addSticky.style.maxWidth = '160px';
+      addSticky.style.height = '140px';
+      addSticky.innerHTML = `<div class="pin-icon"></div><div class="add-plus" style="font-size:58px;">+</div>`;
+      container.appendChild(addSticky);
+      const addPos = randomPosition(addSticky, notes.length + 777);
+      addSticky.style.position = 'absolute';
+      addSticky.style.left = addPos.left + 'px';
+      addSticky.style.top = addPos.top + 'px';
+      addSticky.style.cursor = 'pointer';
+      makeDraggable(addSticky);
+      addSticky.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!currentUser) {
+          document.getElementById('userDrawer').classList.toggle('open');
+          return;
+        }
+        // open compose modal (inline mini modal)
+        openComposeModal();
       });
-    } catch(e) { feed.innerHTML = '<div style="text-align:center;">could not load, refresh</div>'; }
+    } catch(err) {
+      console.warn(err);
+      container.innerHTML = '<div style="padding:60px; text-align:center;">could not load notes, refresh</div>';
+    }
   }
 
-  async function deletePost(id) {
-    if (!currentUser || !confirm('remove this postcard?')) return;
-    await restCall(`posts?id=eq.${id}&user_id=eq.${currentUser.id}`, { method: 'DELETE' });
-    loadPosts();
-  }
-
-  // --- COMPOSE (color palette 12 colors) ---
-  const colorList = ['cream','ivory','mint','lavender','peach','sky','rose','butter','seafoam','terracotta','mauve','citrus'];
+  // simple compose modal with 12 colors + fonts
   let selectedColor = 'cream';
   let selectedFont = 'serif';
-
-  function buildColorPalette() {
-    const container = document.getElementById('colorPalette');
-    if(!container) return;
-    container.innerHTML = colorList.map(c => `<div class="color-chip ${c}" data-color="${c}"></div>`).join('');
-    document.querySelectorAll('.color-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        selectedColor = chip.dataset.color;
-      });
+  function openComposeModal() {
+    const colors = ['cream','ivory','mint','lavender','peach','sky','rose','butter','seafoam','terracotta','mauve','citrus'];
+    const colorHtml = colors.map(c => `<div class="color-chip ${c}" data-col="${c}" style="width:38px;height:38px;border-radius:50%;background:var(--bgc); margin:4px; display:inline-block; cursor:pointer;" data-color="${c}"></div>`).join('');
+    const modalDiv = document.createElement('div');
+    modalDiv.style.position = 'fixed';
+    modalDiv.style.top = '0';
+    modalDiv.style.left = '0';
+    modalDiv.style.width = '100%';
+    modalDiv.style.height = '100%';
+    modalDiv.style.background = 'rgba(0,0,0,0.75)';
+    modalDiv.style.backdropFilter = 'blur(12px)';
+    modalDiv.style.zIndex = '2000';
+    modalDiv.style.display = 'flex';
+    modalDiv.style.alignItems = 'center';
+    modalDiv.style.justifyContent = 'center';
+    modalDiv.innerHTML = `
+      <div style="background:#1e1b16; max-width:500px; width:90%; border-radius:48px; padding:28px; border:1px solid #c8aa6e;">
+        <h3 style="font-family:'Playfair Display'; margin-bottom:16px;">✧ pin a new note ✧</h3>
+        <textarea id="composeText" rows="3" placeholder="what's floating in your mind..." style="width:100%; background:#2b2822; border:none; padding:14px; border-radius:24px; color:#f2ede4;"></textarea>
+        <div style="margin:16px 0 8px;">paper colors</div>
+        <div id="colorGrid" style="display:flex; flex-wrap:wrap; gap:8px;">${colorHtml}</div>
+        <div style="margin:14px 0 8px;">font style</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <span data-fnt="serif" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Serif</span>
+          <span data-fnt="sans" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Sans</span>
+          <span data-fnt="modern" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Modern</span>
+          <span data-fnt="wavy" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Italic</span>
+        </div>
+        <button id="confirmPublish" style="width:100%; margin-top:24px; background:#c8aa6e; border:none; padding:14px; border-radius:44px; font-weight:bold;">✧ pin to wall ✧</button>
+        <button id="closeModalBtn" style="margin-top:12px; background:transparent; border:none; color:#b9aa8c; width:100%; cursor:pointer;">cancel</button>
+      </div>
+    `;
+    document.body.appendChild(modalDiv);
+    // set default active color
+    document.querySelectorAll('.color-chip').forEach(ch => {
+      ch.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue(`--${ch.dataset.col}`) || '#fff';
+      ch.addEventListener('click', () => { selectedColor = ch.dataset.color; });
     });
-    document.querySelector('.color-chip.cream')?.classList.add('active');
-  }
-
-  document.querySelectorAll('.font-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      document.querySelectorAll('.font-option').forEach(f => f.classList.remove('active'));
-      opt.classList.add('active');
-      selectedFont = opt.dataset.font;
+    document.querySelectorAll('.font-opt').forEach(f => {
+      f.addEventListener('click', () => { selectedFont = f.dataset.fnt; });
     });
-  });
-  document.querySelector('.font-option.serif')?.classList.add('active');
-
-  async function publishPostcard() {
-    if (!currentUser) { toast('log in to pin a postcard'); document.getElementById('userDrawer').classList.add('open'); return; }
-    const text = document.getElementById('newPostText').value.trim();
-    if (!text) { toast('write something'); return; }
-    const btn = document.getElementById('doPublishBtn');
-    btn.innerText = 'pinning...';
-    try {
-      await restCall('posts', {
-        method: 'POST',
-        body: JSON.stringify({
-          user_id: currentUser.id,
-          author_name: currentProfile?.name || 'visitor',
-          content: text,
-          card_color: selectedColor,
-          font_style: selectedFont
-        })
-      });
-      document.getElementById('newPostText').value = '';
-      closeModal('postModal');
-      if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts();
-      else showPage('feelings');
-    } catch(err) { toast('error'); } finally { btn.innerText = '✧ pin to wall ✧'; }
+    document.getElementById('confirmPublish').onclick = async () => {
+      const text = document.getElementById('composeText').value.trim();
+      if (!text) { toastMsg('write something'); return; }
+      if (!currentUser) { toastMsg('please log in first'); modalDiv.remove(); return; }
+      const btn = document.getElementById('confirmPublish');
+      btn.innerText = 'pinning...';
+      try {
+        await restCall('posts', {
+          method: 'POST',
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            author_name: currentProfile?.name || 'visitor',
+            content: text,
+            card_color: selectedColor,
+            font_style: selectedFont
+          })
+        });
+        modalDiv.remove();
+        loadAllNotes();
+        toastMsg('new note pinned ✦');
+      } catch(e) { toastMsg('error'); btn.innerText = '✧ pin to wall ✧'; }
+    };
+    document.getElementById('closeModalBtn').onclick = () => modalDiv.remove();
+    document.querySelectorAll('.color-chip')[0]?.click(); // default cream
   }
 
-  // ---- navigation & UI ----
-  function showPage(page) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(page + 'Page').classList.add('active');
-    if (page === 'feelings') loadPosts();
+  // helpers
+  function escapeHtml(str) { return (str || '').replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  function timeAgo(ts) {
+    const d = Date.now() - new Date(ts).getTime();
+    const m = Math.floor(d/60000);
+    if(m<1) return 'just now';
+    if(m<60) return m+'m ago';
+    const h = Math.floor(m/60);
+    if(h<24) return h+'h ago';
+    return Math.floor(h/24)+'d ago';
   }
-  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
-  
-  document.getElementById('homeHero')?.addEventListener('click', () => showPage('feelings'));
-  document.getElementById('addPostBtn')?.addEventListener('click', () => {
-    if (!currentUser) { document.getElementById('userDrawer').classList.toggle('open'); }
-    else { buildColorPalette(); document.getElementById('postModal').classList.add('open'); }
-  });
-  document.getElementById('doPublishBtn')?.addEventListener('click', publishPostcard);
 
-  // background parallax
+  // ---- background cloud zoom & move (intense parallax) ----
+  const cloud = document.getElementById('cloudBg');
   document.addEventListener('mousemove', (e) => {
-    const x = (e.clientX / window.innerWidth - 0.5) * 10;
-    const y = (e.clientY / window.innerHeight - 0.5) * 6;
-    document.getElementById('parallaxBg').style.transform = `translate(${x}px, ${y}px)`;
+    const xPercent = (e.clientX / window.innerWidth - 0.5) * 2.2;   // range -1.1 .. 1.1
+    const yPercent = (e.clientY / window.innerHeight - 0.5) * 1.5;
+    const scale = 1 + Math.abs(xPercent) * 0.12 + Math.abs(yPercent) * 0.08; // zoom max ~1.2
+    cloud.style.transform = `translate(${xPercent * 28}px, ${yPercent * 18}px) scale(${scale})`;
   });
 
-  // init
-  sb.auth.onAuthStateChange(async () => { await updateSession(); if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts(); });
+  // page navigation
+  document.getElementById('homeTrigger')?.addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('feelingsPage').classList.add('active');
+    loadAllNotes();
+  });
+
+  // init session & auth listener
+  sb.auth.onAuthStateChange(async () => { await updateSession(); if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes(); });
   (async () => { await updateSession(); })();
-  buildColorPalette();
 </script>
 </body>
 </html>
