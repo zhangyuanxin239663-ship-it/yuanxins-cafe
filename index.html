@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>yuanxin's café · drifting notes</title>
+  <title>yuanxin's café</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -20,7 +20,6 @@
       min-height: 100vh;
     }
 
-    /* cloud parallax background */
     .cloud-bg {
       position: fixed;
       top: 0;
@@ -56,7 +55,7 @@
       display: block;
     }
 
-    /* ========= HOME: massive title, no cutoff, color shift on hover ========= */
+    /* HOME PAGE - massive title */
     .hero-home {
       height: 100vh;
       width: 100%;
@@ -64,7 +63,7 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      padding: 0 5vw;  /* prevents edge cutoff on small screens */
+      padding: 0 5vw;
     }
     .monumental {
       font-family: 'Playfair Display', serif;
@@ -77,30 +76,147 @@
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      white-space: normal;        /* allows wrapping on tiny screens, but still huge */
-      word-break: keep-all;
-      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-      display: inline-block;
+      white-space: normal;
+      transition: all 0.25s ease;
     }
-    /* magical color-shift on hover (blue shimmer) */
     .monumental:hover {
       background: linear-gradient(135deg, #7aa2f7, #3b82f6, #60a5fa);
       background-clip: text;
       -webkit-background-clip: text;
       transform: scale(1.01);
-      letter-spacing: -0.01em;
     }
 
-    /* ========= STICKY WALL ========= */
+    /* SUBPAGE - sticky wall */
     .wall-container {
       position: relative;
       min-height: 100vh;
       width: 100%;
       padding: 40px 30px 140px 30px;
-      background: transparent;
     }
 
-    /* draggable sticky note — smaller on mobile, zoom-friendly */
+    /* login button - prominent and easy to find */
+    .login-corner-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #c8aa6e;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 60px;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 150;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+      color: #0a0908;
+    }
+    .login-corner-btn:hover {
+      transform: scale(1.05);
+      background: #e2bc7c;
+    }
+
+    /* user info button (when logged in) */
+    .user-corner-btn {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #1e1b16ee;
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(200,170,110,0.5);
+      padding: 10px 20px;
+      border-radius: 60px;
+      cursor: pointer;
+      z-index: 150;
+      font-size: 14px;
+      color: #e2cfaa;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Inter', sans-serif;
+    }
+    .user-corner-btn:hover {
+      background: #2b2822;
+    }
+
+    /* MODAL - login/register popup (clear and easy) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .auth-modal {
+      background: #1e1b16;
+      border-radius: 48px;
+      padding: 40px;
+      max-width: 400px;
+      width: 90%;
+      border: 1px solid rgba(200,170,110,0.4);
+    }
+    .auth-modal h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      margin-bottom: 24px;
+      color: #ece8e0;
+    }
+    .auth-modal input {
+      width: 100%;
+      background: #2b2822;
+      border: 1px solid #4a443a;
+      padding: 14px;
+      border-radius: 60px;
+      color: #ece8e0;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .auth-modal button {
+      width: 100%;
+      background: #c8aa6e;
+      border: none;
+      padding: 14px;
+      border-radius: 60px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .auth-modal .google-btn {
+      background: #2b2822;
+      color: #e2cfaa;
+      border: 1px solid #c8aa6e;
+    }
+    .auth-modal .switch-text {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #b9aa8c;
+    }
+    .auth-modal .switch-text a {
+      color: #c8aa6e;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .close-modal {
+      float: right;
+      font-size: 28px;
+      cursor: pointer;
+      color: #b9aa8c;
+      margin-top: -20px;
+    }
+
+    /* sticky note styles */
     .sticky-note {
       position: absolute;
       min-width: 200px;
@@ -109,28 +225,19 @@
       border-radius: 24px;
       padding: 0;
       box-shadow: 0 12px 24px -10px rgba(0,0,0,0.3);
-      transition: box-shadow 0.2s, transform 0.05s linear;
       cursor: grab;
       z-index: 10;
-      backdrop-filter: blur(1px);
-      will-change: left, top;
     }
     @media (max-width: 680px) {
       .sticky-note {
         min-width: 170px;
         max-width: 220px;
       }
-      .wall-container {
-        padding: 30px 16px 120px 16px;
-      }
     }
     .sticky-note:active {
       cursor: grabbing;
-      box-shadow: 0 20px 32px -12px rgba(0,0,0,0.45);
       z-index: 999;
     }
-
-    /* paper color variants (12 rich tones) */
     .note-cream { background: #fffef5; }
     .note-ivory { background: #fef7e8; }
     .note-mint { background: #f2f9f2; }
@@ -166,7 +273,6 @@
       gap: 12px;
     }
 
-    /* dynamic text: auto-scaling if too long, but zoomable */
     .note-text {
       font-size: clamp(12px, 4vw, 16px);
       line-height: 1.45;
@@ -175,32 +281,6 @@
       color: #1f1e1a;
       max-height: 280px;
       overflow-y: auto;
-      transition: font-size 0.1s ease;
-    }
-    /* when text is very long, make it smaller — but user can zoom in with pinch */
-    .note-text[data-long="true"] {
-      font-size: 11px;
-    }
-    @media (max-width: 600px) {
-      .note-text {
-        font-size: 13px;
-      }
-      .note-text[data-long="true"] {
-        font-size: 10px;
-      }
-    }
-
-    /* custom scroll for long notes */
-    .note-text::-webkit-scrollbar {
-      width: 3px;
-    }
-    .note-text::-webkit-scrollbar-track {
-      background: #e6dfd0;
-      border-radius: 10px;
-    }
-    .note-text::-webkit-scrollbar-thumb {
-      background: #b48c48;
-      border-radius: 10px;
     }
 
     .note-footer {
@@ -210,7 +290,6 @@
       border-top: 1px solid rgba(0,0,0,0.08);
       padding-top: 10px;
       font-size: 9px;
-      letter-spacing: 0.3px;
       color: #5f5b4e;
       text-transform: uppercase;
     }
@@ -231,20 +310,17 @@
       padding: 2px 6px;
       border-radius: 40px;
     }
-    .delete-note:hover { background: #f2e3d4; color: #bc5a3c; }
 
-    /* the "+" note (inline editor) */
+    /* + note (add new post) */
     .add-note {
       background: #e8e0d0;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-    .add-note:hover {
-      transform: scale(1.02);
-      background: #f2ecd9;
+      min-width: 130px;
+      max-width: 150px;
+      height: 130px;
     }
     .add-plus {
       font-size: 48px;
@@ -252,7 +328,7 @@
       color: #6a5a44;
     }
 
-    /* inline editor (inside + note) */
+    /* inline editor */
     .inline-editor {
       width: 100%;
       display: flex;
@@ -268,11 +344,6 @@
       font-family: 'Inter', sans-serif;
       font-size: 13px;
       resize: vertical;
-      color: #1f1e1a;
-    }
-    .inline-editor textarea:focus {
-      outline: none;
-      border-color: #c8aa6e;
     }
     .color-row {
       display: flex;
@@ -286,7 +357,6 @@
       border-radius: 50%;
       cursor: pointer;
       border: 2px solid transparent;
-      transition: 0.1s;
     }
     .color-dot.selected {
       border-color: #c8aa6e;
@@ -315,77 +385,20 @@
       cursor: pointer;
       font-size: 11px;
     }
-
-    /* user drawer (left bottom) */
-    .user-drawer {
-      position: fixed;
-      bottom: 28px;
-      left: 28px;
-      background: #1e1b16ee;
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(200,170,110,0.5);
-      border-radius: 36px;
-      padding: 16px 20px;
-      width: 260px;
-      z-index: 200;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .user-drawer.open { display: flex; }
-    .drawer-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 17px;
-      font-weight: 500;
-      color: #ece8e0;
-    }
-    .edit-btn, .logout-action {
-      background: rgba(200,170,110,0.2);
-      border: none;
-      padding: 7px;
-      border-radius: 40px;
-      color: #e2cfaa;
-      cursor: pointer;
-      font-size: 11px;
-    }
-    .login-input {
-      background: #2b2822;
-      border: none;
-      padding: 9px;
-      border-radius: 40px;
-      color: #ece8e0;
-      margin-bottom: 5px;
-      font-size: 12px;
-    }
-    .login-small-btn {
-      background: #c8aa6e;
-      border: none;
-      padding: 8px;
-      border-radius: 40px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 12px;
-    }
     .toast-msg {
       position: fixed;
       bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
       background: #1f1c17;
-      padding: 6px 18px;
+      padding: 8px 20px;
       border-radius: 60px;
-      font-size: 12px;
+      font-size: 13px;
       z-index: 300;
       pointer-events: none;
       opacity: 0;
       transition: 0.1s;
       color: #e2cfaa;
-      white-space: nowrap;
-    }
-    @media (max-width: 680px) {
-      .user-drawer { left: 16px; bottom: 16px; width: 230px; padding: 12px 16px; }
-      .toast-msg { bottom: 80px; font-size: 11px; white-space: nowrap; }
-      .add-plus { font-size: 40px; }
     }
   </style>
 </head>
@@ -404,14 +417,20 @@
   <div class="wall-container" id="wallContainer"></div>
 </div>
 
-<div class="user-drawer" id="userDrawer">
-  <div id="drawerDynamic"></div>
+<!-- Login/Register Modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="auth-modal">
+    <span class="close-modal" onclick="closeAuthModal()">&times;</span>
+    <div id="authFormContent">
+      <!-- dynamic content: login or register -->
+    </div>
+  </div>
 </div>
 
 <div class="toast-msg" id="liveToast"></div>
 
 <script>
-  // ----------------------------- SUPABASE (REST + AUTH) ---------------------------------
+  // SUPABASE CONFIG
   const SURL = 'https://kjgeitgrvljrqblbrcet.supabase.co';
   const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZ2VpdGdydmxqcnFibGJyY2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTUyNDAsImV4cCI6MjA5MDY5MTI0MH0.WcWqqXlNAW0CycEnMNkgkKeAUVqMx-FES0cl_Bjucvw';
   const sb = supabase.createClient(SURL, SKEY);
@@ -446,17 +465,20 @@
       currentUser = session.user;
       await loadProfile();
     } else {
-      sessionToken = null; currentUser = null; currentProfile = null;
+      sessionToken = null;
+      currentUser = null;
+      currentProfile = null;
     }
-    renderDrawer();
+    updateUIButtons();
   }
 
   async function loadProfile() {
     if (!currentUser) return;
     try {
       const data = await restCall(`profiles?id=eq.${currentUser.id}&limit=1`);
-      if (data && data[0]) currentProfile = data[0];
-      else {
+      if (data && data[0]) {
+        currentProfile = data[0];
+      } else {
         const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
         await restCall('profiles', { method: 'POST', body: JSON.stringify({ id: currentUser.id, name, email: currentUser.email }) });
         currentProfile = { id: currentUser.id, name };
@@ -464,58 +486,99 @@
     } catch(e) { console.warn(e); }
   }
 
-  function renderDrawer() {
-    const container = document.getElementById('drawerDynamic');
-    if (!container) return;
+  function updateUIButtons() {
+    const feelingsPage = document.getElementById('feelingsPage');
+    if (!feelingsPage.classList.contains('active')) return;
+    
+    let existingBtn = document.getElementById('dynamicCornerBtn');
+    if (existingBtn) existingBtn.remove();
+    
+    const btn = document.createElement('div');
+    btn.id = 'dynamicCornerBtn';
     if (currentUser && currentProfile) {
-      container.innerHTML = `
-        <div class="drawer-name">☕ ${escapeHtml(currentProfile.name || 'guest')}</div>
-        <button class="edit-btn" id="editProfileBtn">edit name</button>
-        <button class="logout-action" id="logoutBtn">log out</button>
-      `;
-      document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
-        const newName = prompt('edit your name', currentProfile.name);
-        if (newName && newName.trim() && currentUser) {
-          await restCall(`profiles?id=eq.${currentUser.id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) });
-          await loadProfile();
-          renderDrawer();
-          toastMsg('name updated');
-          if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
+      btn.className = 'user-corner-btn';
+      btn.innerHTML = `☕ ${escapeHtml(currentProfile.name || 'guest')} ▼`;
+      btn.onclick = () => {
+        const action = confirm(`Logged in as ${currentProfile.name}\n\nEdit name? Click OK to change name, Cancel to logout`);
+        if (action) {
+          const newName = prompt('Enter new name:', currentProfile.name);
+          if (newName && newName.trim()) {
+            restCall(`profiles?id=eq.${currentUser.id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) })
+              .then(() => { loadProfile(); updateUIButtons(); toastMsg('name updated'); });
+          }
+        } else {
+          sb.auth.signOut().then(() => { 
+            sessionToken = null; currentUser = null; currentProfile = null;
+            updateUIButtons(); 
+            loadAllNotes();
+            toastMsg('logged out');
+          });
         }
-      });
-      document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-        await sb.auth.signOut();
-        sessionToken = null; currentUser = null; currentProfile = null;
-        renderDrawer();
-        document.getElementById('userDrawer').classList.remove('open');
-        if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
-        toastMsg('logged out');
-      });
+      };
     } else {
-      container.innerHTML = `
-        <input class="login-input" type="email" id="drawerEmail" placeholder="email">
-        <input class="login-input" type="password" id="drawerPass" placeholder="password">
-        <button class="login-small-btn" id="drawerLoginBtn">log in</button>
-        <div style="text-align:center; font-size:10px; margin:4px 0;">or</div>
-        <button class="login-small-btn" id="drawerGoogleBtn">google</button>
-        <button class="edit-btn" id="drawerRegisterBtn">create account</button>
-      `;
-      document.getElementById('drawerLoginBtn')?.addEventListener('click', drawerLogin);
-      document.getElementById('drawerGoogleBtn')?.addEventListener('click', () => googleLogin());
-      document.getElementById('drawerRegisterBtn')?.addEventListener('click', openRegisterModal);
+      btn.className = 'login-corner-btn';
+      btn.innerHTML = '✧ log in / join ✧';
+      btn.onclick = () => openAuthModal('login');
     }
+    document.body.appendChild(btn);
   }
 
-  async function drawerLogin() {
-    const email = document.getElementById('drawerEmail')?.value.trim();
-    const pass = document.getElementById('drawerPass')?.value;
-    if (!email || !pass) { toastMsg('enter email/password'); return; }
+  function openAuthModal(mode = 'login') {
+    const modal = document.getElementById('authModal');
+    const content = document.getElementById('authFormContent');
+    if (mode === 'login') {
+      content.innerHTML = `
+        <h2>welcome back</h2>
+        <input type="email" id="loginEmail" placeholder="email" autocomplete="email">
+        <input type="password" id="loginPassword" placeholder="password" autocomplete="current-password">
+        <button id="doLoginBtn">log in</button>
+        <button class="google-btn" id="googleLoginBtn">continue with google</button>
+        <div class="switch-text">new here? <a onclick="openAuthModal('register')">create account</a></div>
+      `;
+      document.getElementById('doLoginBtn')?.addEventListener('click', doLogin);
+      document.getElementById('googleLoginBtn')?.addEventListener('click', googleLogin);
+    } else {
+      content.innerHTML = `
+        <h2>join the café</h2>
+        <input type="text" id="regName" placeholder="full name">
+        <input type="email" id="regEmail" placeholder="email">
+        <input type="password" id="regPassword" placeholder="password (min 6)">
+        <button id="doRegisterBtn">create account</button>
+        <button class="google-btn" id="googleRegBtn">continue with google</button>
+        <div class="switch-text">already a member? <a onclick="openAuthModal('login')">sign in</a></div>
+      `;
+      document.getElementById('doRegisterBtn')?.addEventListener('click', doRegister);
+      document.getElementById('googleRegBtn')?.addEventListener('click', googleLogin);
+    }
+    modal.classList.add('open');
+  }
+
+  function closeAuthModal() {
+    document.getElementById('authModal').classList.remove('open');
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('loginEmail')?.value.trim();
+    const pass = document.getElementById('loginPassword')?.value;
+    if (!email || !pass) { toastMsg('enter email & password'); return; }
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) { toastMsg(error.message); return; }
     await updateSession();
-    renderDrawer();
+    closeAuthModal();
     if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
-    toastMsg(`welcome, ${currentProfile?.name || ''}`);
+    toastMsg('welcome!');
+  }
+
+  async function doRegister() {
+    const name = document.getElementById('regName')?.value.trim();
+    const email = document.getElementById('regEmail')?.value.trim();
+    const pass = document.getElementById('regPassword')?.value;
+    if (!name || !email || !pass) { toastMsg('fill all fields'); return; }
+    if (pass.length < 6) { toastMsg('password min 6 characters'); return; }
+    const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+    if (error) { toastMsg(error.message); return; }
+    toastMsg('account created! please log in');
+    openAuthModal('login');
   }
 
   async function googleLogin() {
@@ -523,25 +586,8 @@
     if (error) toastMsg(error.message);
   }
 
-  function openRegisterModal() {
-    const first = prompt('first name');
-    if (!first) return;
-    const last = prompt('last name (optional)') || '';
-    const email = prompt('email');
-    if (!email) return;
-    const pass = prompt('password (min 6 characters)');
-    if (!pass || pass.length < 6) { toastMsg('password too short'); return; }
-    const fullName = first + (last ? ' ' + last : '');
-    sb.auth.signUp({ email, password: pass, options: { data: { full_name: fullName } } })
-      .then(({ error }) => { if(error) toastMsg(error.message); else toastMsg('account created! please log in'); });
-  }
-
-  // ----- DRAG & DROP (smooth) -----
-  let dragActive = false;
-  let currentDragElement = null;
-  let dragStartX = 0, dragStartY = 0;
-  let initialLeft = 0, initialTop = 0;
-
+  // DRAG & DROP
+  let dragActive = false, currentDragElement = null, dragStartX = 0, dragStartY = 0, initialLeft = 0, initialTop = 0;
   function makeDraggable(el) {
     el.addEventListener('mousedown', (e) => {
       if (e.target.closest('.delete-note') || e.target.closest('.inline-editor')) return;
@@ -558,7 +604,6 @@
       el.style.zIndex = '1000';
     });
   }
-
   window.addEventListener('mousemove', (e) => {
     if (!dragActive || !currentDragElement) return;
     const dx = e.clientX - dragStartX;
@@ -573,7 +618,6 @@
     currentDragElement.style.left = newLeft + 'px';
     currentDragElement.style.top = newTop + 'px';
   });
-
   window.addEventListener('mouseup', () => {
     if (dragActive && currentDragElement) {
       currentDragElement.style.cursor = 'grab';
@@ -596,12 +640,6 @@
 
   const colorClasses = ['cream', 'ivory', 'mint', 'lavender', 'peach', 'sky', 'rose', 'butter', 'seafoam', 'terracotta', 'mauve', 'citrus'];
   
-  // auto shrink long text helper
-  function applyTextShrink(element, text) {
-    if (text.length > 180) element.setAttribute('data-long', 'true');
-    else element.setAttribute('data-long', 'false');
-  }
-
   async function loadAllNotes() {
     const container = document.getElementById('wallContainer');
     if (!container) return;
@@ -614,13 +652,10 @@
         const colorClass = colorClasses[idx % colorClasses.length];
         const noteDiv = document.createElement('div');
         noteDiv.className = `sticky-note note-${colorClass}`;
-        noteDiv.setAttribute('data-id', note.id);
-        const contentLength = (note.content || '').length;
-        const longAttr = contentLength > 180 ? 'data-long="true"' : 'data-long="false"';
         noteDiv.innerHTML = `
           <div class="pin-icon"></div>
           <div class="note-inner">
-            <div class="note-text" ${longAttr}>${escapeHtml(note.content)}</div>
+            <div class="note-text">${escapeHtml(note.content)}</div>
             <div class="note-footer">
               <button class="note-author">${escapeHtml(note.author_name || 'anonymous')}</button>
               <span>${timeAgo(note.created_at)}</span>
@@ -635,10 +670,9 @@
         noteDiv.style.top = pos.top + 'px';
         noteDiv.style.cursor = 'grab';
         makeDraggable(noteDiv);
-        
         noteDiv.querySelector('.delete-note')?.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if (!currentUser) { toastMsg('log in to delete'); return; }
+          if (!currentUser) { toastMsg('log in to delete'); openAuthModal('login'); return; }
           if (confirm('remove this note?')) {
             await restCall(`posts?id=eq.${note.id}&user_id=eq.${currentUser.id}`, { method: 'DELETE' });
             loadAllNotes();
@@ -647,15 +681,9 @@
         });
       });
       
-      // CREATE THE + STICKY NOTE (inline editor)
+      // + note
       const addSticky = document.createElement('div');
       addSticky.className = 'sticky-note add-note';
-      addSticky.style.minWidth = '130px';
-      addSticky.style.maxWidth = '150px';
-      addSticky.style.height = '130px';
-      addSticky.style.display = 'flex';
-      addSticky.style.alignItems = 'center';
-      addSticky.style.justifyContent = 'center';
       addSticky.innerHTML = `<div class="pin-icon"></div><div class="add-plus">+</div>`;
       container.appendChild(addSticky);
       const addPos = randomPosition(addSticky, notes.length + 999);
@@ -665,15 +693,9 @@
       addSticky.style.cursor = 'pointer';
       makeDraggable(addSticky);
       
-      let isEditorOpen = false;
-      addSticky.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (!currentUser) {
-          document.getElementById('userDrawer').classList.toggle('open');
-          return;
-        }
-        if (isEditorOpen) return;
-        isEditorOpen = true;
+      addSticky.addEventListener('click', async () => {
+        if (!currentUser) { toastMsg('please log in to post'); openAuthModal('login'); return; }
+        if (addSticky.querySelector('.inline-editor')) return;
         addSticky.style.width = '270px';
         addSticky.style.height = 'auto';
         addSticky.style.minWidth = '240px';
@@ -692,15 +714,15 @@
             </div>
           </div>
         `;
+        const colorMap = { cream:'#fffef5', ivory:'#fef7e8', mint:'#f2f9f2', lavender:'#f8f3fc', peach:'#fff2e6', sky:'#eef5ff', rose:'#fff0f2', butter:'#fff8e0', seafoam:'#e9f4ef', terracotta:'#fceaea', mauve:'#f5ecf0', citrus:'#fff7e0' };
+        let selectedColor = 'cream';
         const colorRow = document.getElementById('colorRow');
-        let selectedColor = colorClasses[0];
         colorClasses.forEach(c => {
           const dot = document.createElement('div');
           dot.className = 'color-dot';
-          const colorMap = { cream:'#fffef5', ivory:'#fef7e8', mint:'#f2f9f2', lavender:'#f8f3fc', peach:'#fff2e6', sky:'#eef5ff', rose:'#fff0f2', butter:'#fff8e0', seafoam:'#e9f4ef', terracotta:'#fceaea', mauve:'#f5ecf0', citrus:'#fff7e0' };
           dot.style.backgroundColor = colorMap[c];
           dot.dataset.color = c;
-          if (c === selectedColor) dot.classList.add('selected');
+          if (c === 'cream') dot.classList.add('selected');
           dot.addEventListener('click', () => {
             document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
             dot.classList.add('selected');
@@ -711,44 +733,23 @@
         document.getElementById('submitPostBtn').onclick = async () => {
           const text = document.getElementById('inlinePostText').value.trim();
           if (!text) { toastMsg('write something'); return; }
-          const btn = document.getElementById('submitPostBtn');
-          btn.innerText = 'pinning...';
-          try {
-            await restCall('posts', {
-              method: 'POST',
-              body: JSON.stringify({
-                user_id: currentUser.id,
-                author_name: currentProfile?.name || 'visitor',
-                content: text,
-                card_color: selectedColor,
-                font_style: 'sans'
-              })
-            });
-            loadAllNotes();
-            toastMsg('note pinned ✦');
-          } catch(err) {
-            toastMsg('error posting');
-            console.error(err);
-          }
+          await restCall('posts', {
+            method: 'POST',
+            body: JSON.stringify({
+              user_id: currentUser.id,
+              author_name: currentProfile?.name || 'visitor',
+              content: text
+            })
+          });
+          loadAllNotes();
+          toastMsg('note pinned ✦');
         };
-        document.getElementById('cancelPostBtn').onclick = () => { loadAllNotes(); };
+        document.getElementById('cancelPostBtn').onclick = () => loadAllNotes();
       });
-    } catch(err) {
-      console.error(err);
-      container.innerHTML = '<div style="padding:60px; text-align:center;">could not load notes, refresh</div>';
-    }
+    } catch(err) { container.innerHTML = '<div style="padding:60px;text-align:center;">could not load notes, refresh</div>'; }
   }
 
-  function escapeHtml(str) { 
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
-  
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
   function timeAgo(ts) {
     const d = Date.now() - new Date(ts).getTime();
     const m = Math.floor(d/60000);
@@ -759,7 +760,7 @@
     return Math.floor(h/24)+'d ago';
   }
 
-  // cloud parallax with zoom
+  // cloud parallax
   const cloud = document.getElementById('cloudBg');
   document.addEventListener('mousemove', (e) => {
     const xPercent = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -771,13 +772,11 @@
   document.getElementById('homeTrigger')?.addEventListener('click', () => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('feelingsPage').classList.add('active');
+    updateUIButtons();
     loadAllNotes();
   });
 
-  sb.auth.onAuthStateChange(async () => { 
-    await updateSession(); 
-    if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
-  });
+  sb.auth.onAuthStateChange(async () => { await updateSession(); if (document.getElementById('feelingsPage').classList.contains('active')) { updateUIButtons(); loadAllNotes(); } });
   (async () => { await updateSession(); })();
 </script>
 </body>
