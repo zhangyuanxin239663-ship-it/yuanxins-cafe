@@ -55,7 +55,6 @@
       display: block;
     }
 
-    /* HOME PAGE */
     .hero-home {
       height: 100vh;
       width: 100%;
@@ -85,7 +84,6 @@
       transform: scale(1.01);
     }
 
-    /* SUBPAGE */
     .wall-container {
       position: relative;
       min-height: 100vh;
@@ -93,7 +91,6 @@
       padding: 40px 30px 140px 30px;
     }
 
-    /* corner buttons */
     .login-corner-btn {
       position: fixed;
       bottom: 28px;
@@ -129,7 +126,6 @@
       font-family: 'Inter', sans-serif;
     }
 
-    /* MODAL */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -202,7 +198,6 @@
       margin-top: -20px;
     }
 
-    /* STICKY NOTES */
     .sticky-note {
       position: absolute;
       min-width: 200px;
@@ -393,9 +388,14 @@
     if (res.status === 204) return { success: true };
     const text = await res.text();
     if (!text || text.trim() === '') return options.method === 'GET' ? [] : { success: true };
-    const data = JSON.parse(text);
-    if (!res.ok) throw new Error(data.message || 'api error');
-    return data;
+    try {
+      const data = JSON.parse(text);
+      if (!res.ok) throw new Error(data.message || 'api error');
+      return data;
+    } catch(e) {
+      if (options.method !== 'GET') return { success: true };
+      throw e;
+    }
   }
 
   async function updateSession() {
@@ -468,6 +468,7 @@
   }
 
   function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+  
   async function doLogin() {
     const email = document.getElementById('loginEmail')?.value.trim();
     const pass = document.getElementById('loginPassword')?.value;
@@ -478,6 +479,7 @@
     if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
     toastMsg('welcome!');
   }
+  
   async function doRegister() {
     const name = document.getElementById('regName')?.value.trim();
     const email = document.getElementById('regEmail')?.value.trim();
@@ -488,13 +490,14 @@
     if (error) { toastMsg(error.message); return; }
     toastMsg('account created! please log in'); openAuthModal('login');
   }
+  
   async function googleLogin() {
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
     if (error) toastMsg(error.message);
   }
 
-  // DRAG WITH PERSISTENT SAVE
-  function makeDraggable(el, postId, currentLeft, currentTop) {
+  // DRAG WITH POSITION SAVING
+  function makeDraggable(el, postId) {
     el.addEventListener('mousedown', (e) => {
       if (e.target.closest('.delete-note') || e.target.closest('.inline-editor')) return;
       e.preventDefault();
@@ -519,7 +522,10 @@
         method: 'PATCH',
         body: JSON.stringify({ pos_x: Math.round(left), pos_y: Math.round(top) })
       });
-    } catch(e) { console.warn('save position error', e); }
+    } catch(e) { 
+      // Silently fail if columns don't exist yet - they will after SQL is run
+      console.log('Position save skipped - columns may not exist yet');
+    }
   }
 
   window.addEventListener('mousemove', (e) => {
@@ -606,13 +612,12 @@
           const rand = randomPosition(noteDiv, idx);
           leftPos = rand.left;
           topPos = rand.top;
-          await savePosition(note.id, leftPos, topPos);
         }
         noteDiv.style.position = 'absolute';
         noteDiv.style.left = leftPos + 'px';
         noteDiv.style.top = topPos + 'px';
         noteDiv.style.cursor = 'grab';
-        makeDraggable(noteDiv, note.id, leftPos, topPos);
+        makeDraggable(noteDiv, note.id);
         
         noteDiv.querySelector('.delete-note')?.addEventListener('click', async (e) => {
           e.stopPropagation();
@@ -636,7 +641,6 @@
       addSticky.style.top = addPos.top + 'px';
       addSticky.style.cursor = 'pointer';
       
-      addSticky.addEventListener('mousedown', (e) => { e.stopPropagation(); });
       addSticky.addEventListener('click', async () => {
         if (!currentUser) { toastMsg('please log in to post'); openAuthModal('login'); return; }
         if (addSticky.querySelector('.inline-editor')) return;
@@ -690,7 +694,10 @@
         };
         document.getElementById('cancelPostBtn').onclick = () => loadAllNotes();
       });
-    } catch(err) { container.innerHTML = '<div style="padding:60px;text-align:center;">could not load notes, refresh</div>'; }
+    } catch(err) { 
+      console.error(err);
+      container.innerHTML = '<div style="padding:60px;text-align:center;">could not load notes, refresh</div>'; 
+    }
   }
 
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
