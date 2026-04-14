@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>yuanxin's café</title>
+  <title>yuanxin's café · persistent wall</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -55,7 +55,7 @@
       display: block;
     }
 
-    /* HOME PAGE - massive title */
+    /* HOME PAGE */
     .hero-home {
       height: 100vh;
       width: 100%;
@@ -76,7 +76,6 @@
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      white-space: normal;
       transition: all 0.25s ease;
     }
     .monumental:hover {
@@ -86,7 +85,7 @@
       transform: scale(1.01);
     }
 
-    /* SUBPAGE - sticky wall */
+    /* SUBPAGE */
     .wall-container {
       position: relative;
       min-height: 100vh;
@@ -94,7 +93,7 @@
       padding: 40px 30px 140px 30px;
     }
 
-    /* login button - prominent and easy to find */
+    /* corner buttons */
     .login-corner-btn {
       position: fixed;
       bottom: 28px;
@@ -108,16 +107,9 @@
       z-index: 150;
       font-size: 14px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      transition: all 0.2s;
       font-family: 'Inter', sans-serif;
       color: #0a0908;
     }
-    .login-corner-btn:hover {
-      transform: scale(1.05);
-      background: #e2bc7c;
-    }
-
-    /* user info button (when logged in) */
     .user-corner-btn {
       position: fixed;
       bottom: 28px;
@@ -136,11 +128,8 @@
       gap: 10px;
       font-family: 'Inter', sans-serif;
     }
-    .user-corner-btn:hover {
-      background: #2b2822;
-    }
 
-    /* MODAL - login/register popup (clear and easy) */
+    /* MODAL */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -154,9 +143,7 @@
       justify-content: center;
       z-index: 300;
     }
-    .modal-overlay.open {
-      display: flex;
-    }
+    .modal-overlay.open { display: flex; }
     .auth-modal {
       background: #1e1b16;
       border-radius: 48px;
@@ -206,7 +193,6 @@
     .auth-modal .switch-text a {
       color: #c8aa6e;
       cursor: pointer;
-      text-decoration: none;
     }
     .close-modal {
       float: right;
@@ -216,7 +202,7 @@
       margin-top: -20px;
     }
 
-    /* sticky note styles */
+    /* STICKY NOTES */
     .sticky-note {
       position: absolute;
       min-width: 200px;
@@ -227,17 +213,12 @@
       box-shadow: 0 12px 24px -10px rgba(0,0,0,0.3);
       cursor: grab;
       z-index: 10;
+      transition: box-shadow 0.1s;
     }
     @media (max-width: 680px) {
-      .sticky-note {
-        min-width: 170px;
-        max-width: 220px;
-      }
+      .sticky-note { min-width: 170px; max-width: 220px; }
     }
-    .sticky-note:active {
-      cursor: grabbing;
-      z-index: 999;
-    }
+    .sticky-note:active { cursor: grabbing; z-index: 999; }
     .note-cream { background: #fffef5; }
     .note-ivory { background: #fef7e8; }
     .note-mint { background: #f2f9f2; }
@@ -272,7 +253,6 @@
       flex-direction: column;
       gap: 12px;
     }
-
     .note-text {
       font-size: clamp(12px, 4vw, 16px);
       line-height: 1.45;
@@ -282,7 +262,6 @@
       max-height: 280px;
       overflow-y: auto;
     }
-
     .note-footer {
       display: flex;
       justify-content: space-between;
@@ -310,8 +289,6 @@
       padding: 2px 6px;
       border-radius: 40px;
     }
-
-    /* + note (add new post) */
     .add-note {
       background: #e8e0d0;
       display: flex;
@@ -322,19 +299,8 @@
       max-width: 150px;
       height: 130px;
     }
-    .add-plus {
-      font-size: 48px;
-      font-weight: 300;
-      color: #6a5a44;
-    }
-
-    /* inline editor */
-    .inline-editor {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .add-plus { font-size: 48px; font-weight: 300; color: #6a5a44; }
+    .inline-editor { width: 100%; display: flex; flex-direction: column; gap: 12px; }
     .inline-editor textarea {
       width: 100%;
       background: #fffef5;
@@ -345,12 +311,7 @@
       font-size: 13px;
       resize: vertical;
     }
-    .color-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+    .color-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
     .color-dot {
       width: 28px;
       height: 28px;
@@ -358,33 +319,17 @@
       cursor: pointer;
       border: 2px solid transparent;
     }
-    .color-dot.selected {
-      border-color: #c8aa6e;
-      transform: scale(1.1);
-    }
-    .inline-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-    .inline-post-btn {
-      background: #c8aa6e;
-      border: none;
+    .color-dot.selected { border-color: #c8aa6e; transform: scale(1.1); }
+    .inline-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .inline-post-btn, .inline-cancel-btn {
       padding: 6px 14px;
       border-radius: 40px;
       font-weight: 600;
       cursor: pointer;
       font-size: 11px;
     }
-    .inline-cancel-btn {
-      background: #4a443a;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 40px;
-      color: #ece8e0;
-      cursor: pointer;
-      font-size: 11px;
-    }
+    .inline-post-btn { background: #c8aa6e; border: none; }
+    .inline-cancel-btn { background: #4a443a; border: none; color: #ece8e0; }
     .toast-msg {
       position: fixed;
       bottom: 100px;
@@ -417,27 +362,22 @@
   <div class="wall-container" id="wallContainer"></div>
 </div>
 
-<!-- Login/Register Modal -->
 <div class="modal-overlay" id="authModal">
   <div class="auth-modal">
     <span class="close-modal" onclick="closeAuthModal()">&times;</span>
-    <div id="authFormContent">
-      <!-- dynamic content: login or register -->
-    </div>
+    <div id="authFormContent"></div>
   </div>
 </div>
 
 <div class="toast-msg" id="liveToast"></div>
 
 <script>
-  // SUPABASE CONFIG
   const SURL = 'https://kjgeitgrvljrqblbrcet.supabase.co';
   const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZ2VpdGdydmxqcnFibGJyY2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTUyNDAsImV4cCI6MjA5MDY5MTI0MH0.WcWqqXlNAW0CycEnMNkgkKeAUVqMx-FES0cl_Bjucvw';
   const sb = supabase.createClient(SURL, SKEY);
 
-  let currentUser = null;
-  let currentProfile = null;
-  let sessionToken = null;
+  let currentUser = null, currentProfile = null, sessionToken = null;
+  let dragActive = false, currentDragElement = null, dragStartX = 0, dragStartY = 0, initialLeft = 0, initialTop = 0, currentDragId = null;
 
   function toastMsg(msg) {
     const t = document.getElementById('liveToast');
@@ -465,9 +405,7 @@
       currentUser = session.user;
       await loadProfile();
     } else {
-      sessionToken = null;
-      currentUser = null;
-      currentProfile = null;
+      sessionToken = null; currentUser = null; currentProfile = null;
     }
     updateUIButtons();
   }
@@ -476,9 +414,8 @@
     if (!currentUser) return;
     try {
       const data = await restCall(`profiles?id=eq.${currentUser.id}&limit=1`);
-      if (data && data[0]) {
-        currentProfile = data[0];
-      } else {
+      if (data && data[0]) currentProfile = data[0];
+      else {
         const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
         await restCall('profiles', { method: 'POST', body: JSON.stringify({ id: currentUser.id, name, email: currentUser.email }) });
         currentProfile = { id: currentUser.id, name };
@@ -489,30 +426,22 @@
   function updateUIButtons() {
     const feelingsPage = document.getElementById('feelingsPage');
     if (!feelingsPage.classList.contains('active')) return;
-    
-    let existingBtn = document.getElementById('dynamicCornerBtn');
-    if (existingBtn) existingBtn.remove();
-    
+    let existing = document.getElementById('dynamicCornerBtn');
+    if (existing) existing.remove();
     const btn = document.createElement('div');
     btn.id = 'dynamicCornerBtn';
     if (currentUser && currentProfile) {
       btn.className = 'user-corner-btn';
       btn.innerHTML = `☕ ${escapeHtml(currentProfile.name || 'guest')} ▼`;
       btn.onclick = () => {
-        const action = confirm(`Logged in as ${currentProfile.name}\n\nEdit name? Click OK to change name, Cancel to logout`);
-        if (action) {
+        if (confirm(`Logged in as ${currentProfile.name}\n\nOK to edit name, Cancel to logout`)) {
           const newName = prompt('Enter new name:', currentProfile.name);
           if (newName && newName.trim()) {
             restCall(`profiles?id=eq.${currentUser.id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) })
               .then(() => { loadProfile(); updateUIButtons(); toastMsg('name updated'); });
           }
         } else {
-          sb.auth.signOut().then(() => { 
-            sessionToken = null; currentUser = null; currentProfile = null;
-            updateUIButtons(); 
-            loadAllNotes();
-            toastMsg('logged out');
-          });
+          sb.auth.signOut().then(() => { sessionToken = null; currentUser = null; currentProfile = null; updateUIButtons(); loadAllNotes(); toastMsg('logged out'); });
         }
       };
     } else {
@@ -523,77 +452,55 @@
     document.body.appendChild(btn);
   }
 
-  function openAuthModal(mode = 'login') {
+  function openAuthModal(mode) {
     const modal = document.getElementById('authModal');
     const content = document.getElementById('authFormContent');
     if (mode === 'login') {
-      content.innerHTML = `
-        <h2>welcome back</h2>
-        <input type="email" id="loginEmail" placeholder="email" autocomplete="email">
-        <input type="password" id="loginPassword" placeholder="password" autocomplete="current-password">
-        <button id="doLoginBtn">log in</button>
-        <button class="google-btn" id="googleLoginBtn">continue with google</button>
-        <div class="switch-text">new here? <a onclick="openAuthModal('register')">create account</a></div>
-      `;
+      content.innerHTML = `<h2>welcome back</h2><input type="email" id="loginEmail" placeholder="email"><input type="password" id="loginPassword" placeholder="password"><button id="doLoginBtn">log in</button><button class="google-btn" id="googleLoginBtn">continue with google</button><div class="switch-text">new here? <a onclick="openAuthModal('register')">create account</a></div>`;
       document.getElementById('doLoginBtn')?.addEventListener('click', doLogin);
       document.getElementById('googleLoginBtn')?.addEventListener('click', googleLogin);
     } else {
-      content.innerHTML = `
-        <h2>join the café</h2>
-        <input type="text" id="regName" placeholder="full name">
-        <input type="email" id="regEmail" placeholder="email">
-        <input type="password" id="regPassword" placeholder="password (min 6)">
-        <button id="doRegisterBtn">create account</button>
-        <button class="google-btn" id="googleRegBtn">continue with google</button>
-        <div class="switch-text">already a member? <a onclick="openAuthModal('login')">sign in</a></div>
-      `;
+      content.innerHTML = `<h2>join the café</h2><input type="text" id="regName" placeholder="full name"><input type="email" id="regEmail" placeholder="email"><input type="password" id="regPassword" placeholder="password (min 6)"><button id="doRegisterBtn">create account</button><button class="google-btn" id="googleRegBtn">continue with google</button><div class="switch-text">already a member? <a onclick="openAuthModal('login')">sign in</a></div>`;
       document.getElementById('doRegisterBtn')?.addEventListener('click', doRegister);
       document.getElementById('googleRegBtn')?.addEventListener('click', googleLogin);
     }
     modal.classList.add('open');
   }
 
-  function closeAuthModal() {
-    document.getElementById('authModal').classList.remove('open');
-  }
-
+  function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
   async function doLogin() {
     const email = document.getElementById('loginEmail')?.value.trim();
     const pass = document.getElementById('loginPassword')?.value;
     if (!email || !pass) { toastMsg('enter email & password'); return; }
     const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) { toastMsg(error.message); return; }
-    await updateSession();
-    closeAuthModal();
+    await updateSession(); closeAuthModal();
     if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
     toastMsg('welcome!');
   }
-
   async function doRegister() {
     const name = document.getElementById('regName')?.value.trim();
     const email = document.getElementById('regEmail')?.value.trim();
     const pass = document.getElementById('regPassword')?.value;
     if (!name || !email || !pass) { toastMsg('fill all fields'); return; }
-    if (pass.length < 6) { toastMsg('password min 6 characters'); return; }
+    if (pass.length < 6) { toastMsg('password min 6'); return; }
     const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
     if (error) { toastMsg(error.message); return; }
-    toastMsg('account created! please log in');
-    openAuthModal('login');
+    toastMsg('account created! please log in'); openAuthModal('login');
   }
-
   async function googleLogin() {
     const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
     if (error) toastMsg(error.message);
   }
 
-  // DRAG & DROP
-  let dragActive = false, currentDragElement = null, dragStartX = 0, dragStartY = 0, initialLeft = 0, initialTop = 0;
-  function makeDraggable(el) {
+  // DRAG WITH PERSISTENT SAVE
+  function makeDraggable(el, postId, currentLeft, currentTop) {
     el.addEventListener('mousedown', (e) => {
       if (e.target.closest('.delete-note') || e.target.closest('.inline-editor')) return;
       e.preventDefault();
       dragActive = true;
       currentDragElement = el;
+      currentDragId = postId;
       const rect = el.getBoundingClientRect();
       const containerRect = document.getElementById('wallContainer').getBoundingClientRect();
       initialLeft = rect.left - containerRect.left;
@@ -604,6 +511,17 @@
       el.style.zIndex = '1000';
     });
   }
+
+  async function savePosition(postId, left, top) {
+    if (!postId) return;
+    try {
+      await restCall(`posts?id=eq.${postId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ pos_x: Math.round(left), pos_y: Math.round(top) })
+      });
+    } catch(e) { console.warn('save position error', e); }
+  }
+
   window.addEventListener('mousemove', (e) => {
     if (!dragActive || !currentDragElement) return;
     const dx = e.clientX - dragStartX;
@@ -618,11 +536,20 @@
     currentDragElement.style.left = newLeft + 'px';
     currentDragElement.style.top = newTop + 'px';
   });
-  window.addEventListener('mouseup', () => {
-    if (dragActive && currentDragElement) {
+
+  window.addEventListener('mouseup', async () => {
+    if (dragActive && currentDragElement && currentDragId) {
+      const left = parseFloat(currentDragElement.style.left);
+      const top = parseFloat(currentDragElement.style.top);
+      await savePosition(currentDragId, left, top);
       currentDragElement.style.cursor = 'grab';
       currentDragElement.style.zIndex = '';
       dragActive = false;
+      currentDragElement = null;
+      currentDragId = null;
+    } else if (dragActive) {
+      dragActive = false;
+      if (currentDragElement) currentDragElement.style.cursor = 'grab';
       currentDragElement = null;
     }
   });
@@ -647,11 +574,13 @@
     try {
       const posts = await restCall('posts?order=created_at.desc');
       const notes = posts || [];
-      notes.forEach((note, idx) => {
+      for (let idx = 0; idx < notes.length; idx++) {
+        const note = notes[idx];
         const canDelete = currentUser && currentUser.id === note.user_id;
         const colorClass = colorClasses[idx % colorClasses.length];
         const noteDiv = document.createElement('div');
         noteDiv.className = `sticky-note note-${colorClass}`;
+        noteDiv.setAttribute('data-id', note.id);
         noteDiv.innerHTML = `
           <div class="pin-icon"></div>
           <div class="note-inner">
@@ -664,12 +593,27 @@
           </div>
         `;
         container.appendChild(noteDiv);
-        const pos = randomPosition(noteDiv, idx);
+        
+        let leftPos, topPos;
+        if (note.pos_x !== undefined && note.pos_x !== null && note.pos_y !== undefined && note.pos_y !== null) {
+          leftPos = note.pos_x;
+          topPos = note.pos_y;
+          const maxLeft = container.clientWidth - noteDiv.offsetWidth;
+          const maxTop = container.clientHeight - noteDiv.offsetHeight;
+          leftPos = Math.min(Math.max(0, leftPos), maxLeft);
+          topPos = Math.min(Math.max(0, topPos), maxTop);
+        } else {
+          const rand = randomPosition(noteDiv, idx);
+          leftPos = rand.left;
+          topPos = rand.top;
+          await savePosition(note.id, leftPos, topPos);
+        }
         noteDiv.style.position = 'absolute';
-        noteDiv.style.left = pos.left + 'px';
-        noteDiv.style.top = pos.top + 'px';
+        noteDiv.style.left = leftPos + 'px';
+        noteDiv.style.top = topPos + 'px';
         noteDiv.style.cursor = 'grab';
-        makeDraggable(noteDiv);
+        makeDraggable(noteDiv, note.id, leftPos, topPos);
+        
         noteDiv.querySelector('.delete-note')?.addEventListener('click', async (e) => {
           e.stopPropagation();
           if (!currentUser) { toastMsg('log in to delete'); openAuthModal('login'); return; }
@@ -679,9 +623,9 @@
             toastMsg('note removed');
           }
         });
-      });
+      }
       
-      // + note
+      // + ADD NOTE
       const addSticky = document.createElement('div');
       addSticky.className = 'sticky-note add-note';
       addSticky.innerHTML = `<div class="pin-icon"></div><div class="add-plus">+</div>`;
@@ -691,8 +635,8 @@
       addSticky.style.left = addPos.left + 'px';
       addSticky.style.top = addPos.top + 'px';
       addSticky.style.cursor = 'pointer';
-      makeDraggable(addSticky);
       
+      addSticky.addEventListener('mousedown', (e) => { e.stopPropagation(); });
       addSticky.addEventListener('click', async () => {
         if (!currentUser) { toastMsg('please log in to post'); openAuthModal('login'); return; }
         if (addSticky.querySelector('.inline-editor')) return;
@@ -760,7 +704,6 @@
     return Math.floor(h/24)+'d ago';
   }
 
-  // cloud parallax
   const cloud = document.getElementById('cloudBg');
   document.addEventListener('mousemove', (e) => {
     const xPercent = (e.clientX / window.innerWidth - 0.5) * 2;
