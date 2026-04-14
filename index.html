@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>yuanxin's café · drifting notes</title>
-  <!-- Fonts: pure elegance + modern weight -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>yuanxin's café</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -12,7 +11,6 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      user-select: none; /* avoid accidental text selection while dragging */
     }
 
     body {
@@ -22,7 +20,7 @@
       height: 100vh;
     }
 
-    /* --- CLOUD PARALLAX: zoom & move on cursor --- */
+    /* cloud parallax background */
     .cloud-bg {
       position: fixed;
       top: 0;
@@ -31,12 +29,11 @@
       height: 100%;
       background-image: url('bg.jpg');
       background-size: cover;
-      background-position: center 30%;
+      background-position: center;
       filter: brightness(0.88) contrast(1.05);
       transition: transform 0.08s ease-out;
       will-change: transform;
       z-index: -2;
-      transform-origin: center center;
     }
 
     .dark-veil {
@@ -45,23 +42,21 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 50% 40%, rgba(10,9,8,0.2) 0%, rgba(10,9,8,0.65) 100%);
+      background: radial-gradient(circle at 50% 40%, rgba(10,9,8,0.2) 0%, rgba(10,9,8,0.7) 100%);
       z-index: -1;
       pointer-events: none;
     }
 
-    /* pages */
     .page {
       display: none;
       width: 100%;
       min-height: 100vh;
-      position: relative;
     }
     .page.active {
       display: block;
     }
 
-    /* ========== HOME: ONLY ONE ROW, MASSIVE, FULL SCREEN ========== */
+    /* HOME: only yuanxin's café, massive, full screen */
     .hero-home {
       height: 100vh;
       width: 100%;
@@ -81,45 +76,38 @@
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      text-shadow: 0 2px 15px rgba(0,0,0,0.2);
       white-space: nowrap;
-      transition: transform 0.2s ease;
-    }
-    .monumental:hover {
-      transform: scale(1.01);
     }
 
-    /* ========== SUBPAGE: ORGANIC STICKY WALL (draggable notes) ========== */
+    /* wall container - sticky notes wall */
     .wall-container {
       position: relative;
       min-height: 100vh;
       width: 100%;
-      padding: 40px 40px 120px 40px;
+      padding: 40px;
       background: transparent;
     }
 
-    /* each note is absolutely positioned → random arrangement */
+    /* draggable sticky note */
     .sticky-note {
       position: absolute;
       min-width: 240px;
-      max-width: 340px;
+      max-width: 320px;
       background: #fffef7;
-      border-radius: 28px;
+      border-radius: 24px;
       padding: 0;
-      box-shadow: 0 18px 28px -12px rgba(0,0,0,0.35);
-      transition: box-shadow 0.2s, transform 0.05s linear;
+      box-shadow: 0 12px 24px -10px rgba(0,0,0,0.3);
+      transition: box-shadow 0.2s;
       cursor: grab;
       z-index: 10;
-      backdrop-filter: blur(1px);
-      will-change: left, top;
     }
     .sticky-note:active {
       cursor: grabbing;
-      box-shadow: 0 24px 38px -14px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 32px -12px rgba(0,0,0,0.45);
       z-index: 999;
     }
 
-    /* paper color variants (10+ colors) */
+    /* different paper colors */
     .note-cream { background: #fffef5; }
     .note-ivory { background: #fef7e8; }
     .note-mint { background: #f2f9f2; }
@@ -135,11 +123,11 @@
 
     .pin-icon {
       position: absolute;
-      top: -14px;
+      top: -12px;
       left: 50%;
       transform: translateX(-50%);
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       background: radial-gradient(circle, #e0b57a, #b87c4f);
       border-radius: 50%;
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
@@ -156,17 +144,12 @@
     }
 
     .note-text {
-      font-size: 17px;
-      line-height: 1.45;
+      font-size: 16px;
+      line-height: 1.5;
       word-break: break-word;
-      font-family: var(--note-font, 'Inter');
-      font-weight: 400;
+      font-family: 'Inter', sans-serif;
       color: #1f1e1a;
     }
-    .note-text.serif { font-family: 'Playfair Display', serif; font-weight: 450; }
-    .note-text.sans { font-family: 'Inter', sans-serif; font-weight: 400; }
-    .note-text.modern { font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: -0.2px; }
-    .note-text.wavy { font-family: 'Inter', sans-serif; font-style: italic; }
 
     .note-footer {
       display: flex;
@@ -198,31 +181,90 @@
     }
     .delete-note:hover { background: #f2e3d4; color: #bc5a3c; }
 
-    /* ---- THE "+" NOTE (always present, looks like a sticky, triggers login or compose) ---- */
+    /* the + note (sticky that opens inline editor) */
     .add-note {
-      position: absolute;
-      background: #e6ddcd;
-      box-shadow: 0 18px 28px -12px rgba(0,0,0,0.3);
-      border-radius: 28px;
+      background: #e8e0d0;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
-      z-index: 100;
-      backdrop-filter: blur(2px);
     }
     .add-note:hover {
       transform: scale(1.02);
-      background: #f5ecd9;
+      background: #f2ecd9;
     }
     .add-plus {
-      font-size: 48px;
+      font-size: 52px;
       font-weight: 300;
       color: #6a5a44;
     }
 
-    /* small drawer (login / profile) */
+    /* inline editor (appears inside the + note) */
+    .inline-editor {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .inline-editor textarea {
+      width: 100%;
+      background: #fffef5;
+      border: 1px solid #ddd6c8;
+      padding: 12px;
+      border-radius: 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      resize: vertical;
+      color: #1f1e1a;
+    }
+    .inline-editor textarea:focus {
+      outline: none;
+      border-color: #c8aa6e;
+    }
+    .color-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .color-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.1s;
+    }
+    .color-dot.selected {
+      border-color: #c8aa6e;
+      transform: scale(1.1);
+    }
+    .inline-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .inline-post-btn {
+      background: #c8aa6e;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .inline-cancel-btn {
+      background: #4a443a;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      color: #ece8e0;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* user drawer (login/profile) */
     .user-drawer {
       position: fixed;
       bottom: 28px;
@@ -237,13 +279,13 @@
       display: none;
       flex-direction: column;
       gap: 12px;
-      font-family: 'Inter', sans-serif;
     }
     .user-drawer.open { display: flex; }
     .drawer-name {
       font-family: 'Playfair Display', serif;
       font-size: 18px;
       font-weight: 500;
+      color: #ece8e0;
     }
     .edit-btn, .logout-action {
       background: rgba(200,170,110,0.2);
@@ -286,9 +328,8 @@
       color: #e2cfaa;
     }
     @media (max-width: 680px) {
-      .wall-container { padding: 30px 20px 100px 20px; }
+      .wall-container { padding: 30px 20px; }
       .sticky-note { min-width: 200px; }
-      .user-drawer { left: 16px; bottom: 16px; width: 240px; padding: 14px; }
     }
   </style>
 </head>
@@ -297,28 +338,24 @@
 <div class="cloud-bg" id="cloudBg"></div>
 <div class="dark-veil"></div>
 
-<!-- HOME PAGE : ONLY "yuanxin's café" massive, single row -->
 <div class="page active" id="homePage">
   <div class="hero-home" id="homeTrigger">
     <div class="monumental">yuanxin’s café</div>
   </div>
 </div>
 
-<!-- SUB PAGE : wall of draggable notes -->
 <div class="page" id="feelingsPage">
   <div class="wall-container" id="wallContainer"></div>
 </div>
 
-<!-- floating drawer (login/profile) -->
 <div class="user-drawer" id="userDrawer">
   <div id="drawerDynamic"></div>
 </div>
 
 <div class="toast-msg" id="liveToast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ----------------------------- SUPABASE SETUP ---------------------------------
+  // ----------------------------- SUPABASE ---------------------------------
   const SURL = 'https://kjgeitgrvljrqblbrcet.supabase.co';
   const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZ2VpdGdydmxqcnFibGJyY2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTUyNDAsImV4cCI6MjA5MDY5MTI0MH0.WcWqqXlNAW0CycEnMNkgkKeAUVqMx-FES0cl_Bjucvw';
   const sb = supabase.createClient(SURL, SKEY);
@@ -327,15 +364,13 @@
   let currentProfile = null;
   let sessionToken = null;
 
-  // helper ui
   function toastMsg(msg) {
     const t = document.getElementById('liveToast');
     t.textContent = msg;
     t.style.opacity = '1';
-    setTimeout(() => t.style.opacity = '0', 2200);
+    setTimeout(() => t.style.opacity = '0', 2000);
   }
 
-  // ----- REST (bypass lock issues) -----
   async function restCall(path, options = {}) {
     const headers = { 'apikey': SKEY, 'Content-Type': 'application/json' };
     if (sessionToken) headers['Authorization'] = 'Bearer ' + sessionToken;
@@ -373,7 +408,6 @@
     } catch(e) { console.warn(e); }
   }
 
-  // ---------- DRAWER : LOGIN / PROFILE (simple, no avatar) ----------
   function renderDrawer() {
     const container = document.getElementById('drawerDynamic');
     if (!container) return;
@@ -384,7 +418,7 @@
         <button class="logout-action" id="logoutBtn">log out</button>
       `;
       document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
-        const newName = prompt('edit your display name', currentProfile.name);
+        const newName = prompt('edit your name', currentProfile.name);
         if (newName && newName.trim() && currentUser) {
           await restCall(`profiles?id=eq.${currentUser.id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) });
           await loadProfile();
@@ -407,7 +441,7 @@
         <input class="login-input" type="password" id="drawerPass" placeholder="password">
         <button class="login-small-btn" id="drawerLoginBtn">log in</button>
         <div style="text-align:center; font-size:11px; margin:4px 0;">or</div>
-        <button class="login-small-btn" id="drawerGoogleBtn">continue with google</button>
+        <button class="login-small-btn" id="drawerGoogleBtn">google</button>
         <button class="edit-btn" id="drawerRegisterBtn">create account</button>
       `;
       document.getElementById('drawerLoginBtn')?.addEventListener('click', drawerLogin);
@@ -446,8 +480,7 @@
       .then(({ error }) => { if(error) toastMsg(error.message); else toastMsg('account created! please log in'); });
   }
 
-  // ----- STICKY NOTES : draggable + random placement + wall -----
-  let notesArray = [];     // store DOM ids + data
+  // ----- DRAG AND DROP -----
   let dragActive = false;
   let currentDragElement = null;
   let dragStartX = 0, dragStartY = 0;
@@ -455,7 +488,7 @@
 
   function makeDraggable(el) {
     el.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.delete-note')) return;
+      if (e.target.closest('.delete-note') || e.target.closest('.inline-editor')) return;
       e.preventDefault();
       dragActive = true;
       currentDragElement = el;
@@ -483,7 +516,6 @@
     newTop = Math.min(Math.max(0, newTop), maxTop);
     currentDragElement.style.left = newLeft + 'px';
     currentDragElement.style.top = newTop + 'px';
-    currentDragElement.style.position = 'absolute';
   });
 
   window.addEventListener('mouseup', () => {
@@ -495,40 +527,40 @@
     }
   });
 
-  // generate random positions inside wallContainer
   function randomPosition(element, index) {
     const container = document.getElementById('wallContainer');
     if (!container) return { left: 20, top: 20 };
-    const maxW = Math.max(container.clientWidth - element.offsetWidth, 120);
-    const maxH = Math.max(container.clientHeight - element.offsetHeight, 280);
-    // use deterministic offset + perlin chaos
+    const maxW = Math.max(container.clientWidth - element.offsetWidth, 100);
+    const maxH = Math.max(container.clientHeight - element.offsetHeight, 200);
     const seed = (index * 131) % 1000;
     const left = (seed * 17) % maxW;
     const top = ((seed * 43) % maxH) + 30;
-    return { left: Math.min(maxW-20, left), top: Math.min(maxH-40, top) };
+    return { left: Math.min(maxW - 20, left), top: Math.min(maxH - 40, top) };
   }
 
+  // colors array
+  const colorClasses = ['cream', 'ivory', 'mint', 'lavender', 'peach', 'sky', 'rose', 'butter', 'seafoam', 'terracotta', 'mauve', 'citrus'];
+  
   async function loadAllNotes() {
     const container = document.getElementById('wallContainer');
     if (!container) return;
-    container.innerHTML = ''; // clear
+    container.innerHTML = '';
     try {
       const posts = await restCall('posts?order=created_at.desc');
       const notes = posts || [];
-      // create each sticky note
+      
       notes.forEach((note, idx) => {
         const canDelete = currentUser && currentUser.id === note.user_id;
-        const colorClass = note.card_color || 'cream';
-        const fontClass = note.font_style || 'serif';
+        const colorClass = colorClasses[idx % colorClasses.length];
         const noteDiv = document.createElement('div');
         noteDiv.className = `sticky-note note-${colorClass}`;
         noteDiv.setAttribute('data-id', note.id);
         noteDiv.innerHTML = `
           <div class="pin-icon"></div>
           <div class="note-inner">
-            <div class="note-text ${fontClass}">${escapeHtml(note.content)}</div>
+            <div class="note-text">${escapeHtml(note.content)}</div>
             <div class="note-footer">
-              <button class="note-author" data-author="${note.user_id}">${escapeHtml(note.author_name || 'anonymous')}</button>
+              <button class="note-author">${escapeHtml(note.author_name || 'anonymous')}</button>
               <span>${timeAgo(note.created_at)}</span>
               ${canDelete ? `<button class="delete-note" data-del="${note.id}">✕</button>` : ''}
             </div>
@@ -541,7 +573,7 @@
         noteDiv.style.top = pos.top + 'px';
         noteDiv.style.cursor = 'grab';
         makeDraggable(noteDiv);
-        // delete event
+        
         noteDiv.querySelector('.delete-note')?.addEventListener('click', async (e) => {
           e.stopPropagation();
           if (!currentUser) { toastMsg('log in to delete'); return; }
@@ -551,115 +583,122 @@
             toastMsg('note removed');
           }
         });
-        noteDiv.querySelector('.note-author')?.addEventListener('click', () => {
-          toastMsg(`✧ by ${escapeHtml(note.author_name || 'anonymous')}`);
-        });
       });
-      // ---- THE "+" NOTE (inside the wall, like a sticky note) ----
+      
+      // create the + sticky note
       const addSticky = document.createElement('div');
       addSticky.className = 'sticky-note add-note';
-      addSticky.style.background = '#f9f2e2';
-      addSticky.style.display = 'flex';
-      addSticky.style.alignItems = 'center';
-      addSticky.style.justifyContent = 'center';
       addSticky.style.minWidth = '140px';
       addSticky.style.maxWidth = '160px';
       addSticky.style.height = '140px';
-      addSticky.innerHTML = `<div class="pin-icon"></div><div class="add-plus" style="font-size:58px;">+</div>`;
+      addSticky.style.display = 'flex';
+      addSticky.style.alignItems = 'center';
+      addSticky.style.justifyContent = 'center';
+      addSticky.innerHTML = `<div class="pin-icon"></div><div class="add-plus">+</div>`;
       container.appendChild(addSticky);
-      const addPos = randomPosition(addSticky, notes.length + 777);
+      const addPos = randomPosition(addSticky, notes.length + 999);
       addSticky.style.position = 'absolute';
       addSticky.style.left = addPos.left + 'px';
       addSticky.style.top = addPos.top + 'px';
       addSticky.style.cursor = 'pointer';
       makeDraggable(addSticky);
+      
+      let isEditorOpen = false;
       addSticky.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!currentUser) {
           document.getElementById('userDrawer').classList.toggle('open');
           return;
         }
-        // open compose modal (inline mini modal)
-        openComposeModal();
+        if (isEditorOpen) return;
+        isEditorOpen = true;
+        
+        addSticky.style.width = '280px';
+        addSticky.style.height = 'auto';
+        addSticky.style.minWidth = '260px';
+        addSticky.style.maxWidth = '300px';
+        addSticky.style.display = 'block';
+        addSticky.innerHTML = `
+          <div class="pin-icon"></div>
+          <div class="note-inner">
+            <div class="inline-editor">
+              <textarea id="inlinePostText" rows="3" placeholder="what's on your mind?"></textarea>
+              <div class="color-row" id="colorRow"></div>
+              <div class="inline-actions">
+                <button class="inline-cancel-btn" id="cancelPostBtn">cancel</button>
+                <button class="inline-post-btn" id="submitPostBtn">pin it ✧</button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // add color dots
+        const colorRow = document.getElementById('colorRow');
+        let selectedColor = colorClasses[0];
+        colorClasses.forEach(c => {
+          const dot = document.createElement('div');
+          dot.className = 'color-dot';
+          dot.style.backgroundColor = getColorValue(c);
+          dot.dataset.color = c;
+          if (c === selectedColor) dot.classList.add('selected');
+          dot.addEventListener('click', () => {
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+            dot.classList.add('selected');
+            selectedColor = c;
+          });
+          colorRow.appendChild(dot);
+        });
+        
+        document.getElementById('submitPostBtn').onclick = async () => {
+          const text = document.getElementById('inlinePostText').value.trim();
+          if (!text) { toastMsg('write something'); return; }
+          const btn = document.getElementById('submitPostBtn');
+          btn.innerText = 'pinning...';
+          try {
+            await restCall('posts', {
+              method: 'POST',
+              body: JSON.stringify({
+                user_id: currentUser.id,
+                author_name: currentProfile?.name || 'visitor',
+                content: text
+              })
+            });
+            loadAllNotes();
+            toastMsg('note pinned ✦');
+          } catch(err) {
+            toastMsg('error posting');
+            console.error(err);
+          }
+        };
+        document.getElementById('cancelPostBtn').onclick = () => {
+          loadAllNotes();
+        };
       });
     } catch(err) {
-      console.warn(err);
+      console.error(err);
       container.innerHTML = '<div style="padding:60px; text-align:center;">could not load notes, refresh</div>';
     }
   }
-
-  // simple compose modal with 12 colors + fonts
-  let selectedColor = 'cream';
-  let selectedFont = 'serif';
-  function openComposeModal() {
-    const colors = ['cream','ivory','mint','lavender','peach','sky','rose','butter','seafoam','terracotta','mauve','citrus'];
-    const colorHtml = colors.map(c => `<div class="color-chip ${c}" data-col="${c}" style="width:38px;height:38px;border-radius:50%;background:var(--bgc); margin:4px; display:inline-block; cursor:pointer;" data-color="${c}"></div>`).join('');
-    const modalDiv = document.createElement('div');
-    modalDiv.style.position = 'fixed';
-    modalDiv.style.top = '0';
-    modalDiv.style.left = '0';
-    modalDiv.style.width = '100%';
-    modalDiv.style.height = '100%';
-    modalDiv.style.background = 'rgba(0,0,0,0.75)';
-    modalDiv.style.backdropFilter = 'blur(12px)';
-    modalDiv.style.zIndex = '2000';
-    modalDiv.style.display = 'flex';
-    modalDiv.style.alignItems = 'center';
-    modalDiv.style.justifyContent = 'center';
-    modalDiv.innerHTML = `
-      <div style="background:#1e1b16; max-width:500px; width:90%; border-radius:48px; padding:28px; border:1px solid #c8aa6e;">
-        <h3 style="font-family:'Playfair Display'; margin-bottom:16px;">✧ pin a new note ✧</h3>
-        <textarea id="composeText" rows="3" placeholder="what's floating in your mind..." style="width:100%; background:#2b2822; border:none; padding:14px; border-radius:24px; color:#f2ede4;"></textarea>
-        <div style="margin:16px 0 8px;">paper colors</div>
-        <div id="colorGrid" style="display:flex; flex-wrap:wrap; gap:8px;">${colorHtml}</div>
-        <div style="margin:14px 0 8px;">font style</div>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <span data-fnt="serif" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Serif</span>
-          <span data-fnt="sans" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Sans</span>
-          <span data-fnt="modern" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Modern</span>
-          <span data-fnt="wavy" class="font-opt" style="background:#2b2822; padding:6px 14px; border-radius:40px;">Italic</span>
-        </div>
-        <button id="confirmPublish" style="width:100%; margin-top:24px; background:#c8aa6e; border:none; padding:14px; border-radius:44px; font-weight:bold;">✧ pin to wall ✧</button>
-        <button id="closeModalBtn" style="margin-top:12px; background:transparent; border:none; color:#b9aa8c; width:100%; cursor:pointer;">cancel</button>
-      </div>
-    `;
-    document.body.appendChild(modalDiv);
-    // set default active color
-    document.querySelectorAll('.color-chip').forEach(ch => {
-      ch.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue(`--${ch.dataset.col}`) || '#fff';
-      ch.addEventListener('click', () => { selectedColor = ch.dataset.color; });
-    });
-    document.querySelectorAll('.font-opt').forEach(f => {
-      f.addEventListener('click', () => { selectedFont = f.dataset.fnt; });
-    });
-    document.getElementById('confirmPublish').onclick = async () => {
-      const text = document.getElementById('composeText').value.trim();
-      if (!text) { toastMsg('write something'); return; }
-      if (!currentUser) { toastMsg('please log in first'); modalDiv.remove(); return; }
-      const btn = document.getElementById('confirmPublish');
-      btn.innerText = 'pinning...';
-      try {
-        await restCall('posts', {
-          method: 'POST',
-          body: JSON.stringify({
-            user_id: currentUser.id,
-            author_name: currentProfile?.name || 'visitor',
-            content: text,
-            card_color: selectedColor,
-            font_style: selectedFont
-          })
-        });
-        modalDiv.remove();
-        loadAllNotes();
-        toastMsg('new note pinned ✦');
-      } catch(e) { toastMsg('error'); btn.innerText = '✧ pin to wall ✧'; }
+  
+  function getColorValue(colorName) {
+    const colors = {
+      cream: '#fffef5', ivory: '#fef7e8', mint: '#f2f9f2', lavender: '#f8f3fc',
+      peach: '#fff2e6', sky: '#eef5ff', rose: '#fff0f2', butter: '#fff8e0',
+      seafoam: '#e9f4ef', terracotta: '#fceaea', mauve: '#f5ecf0', citrus: '#fff7e0'
     };
-    document.getElementById('closeModalBtn').onclick = () => modalDiv.remove();
-    document.querySelectorAll('.color-chip')[0]?.click(); // default cream
+    return colors[colorName] || '#fffef5';
   }
 
-  // helpers
-  function escapeHtml(str) { return (str || '').replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  function escapeHtml(str) { 
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
   function timeAgo(ts) {
     const d = Date.now() - new Date(ts).getTime();
     const m = Math.floor(d/60000);
@@ -670,24 +709,26 @@
     return Math.floor(h/24)+'d ago';
   }
 
-  // ---- background cloud zoom & move (intense parallax) ----
+  // cloud zoom on mouse move
   const cloud = document.getElementById('cloudBg');
   document.addEventListener('mousemove', (e) => {
-    const xPercent = (e.clientX / window.innerWidth - 0.5) * 2.2;   // range -1.1 .. 1.1
+    const xPercent = (e.clientX / window.innerWidth - 0.5) * 2;
     const yPercent = (e.clientY / window.innerHeight - 0.5) * 1.5;
-    const scale = 1 + Math.abs(xPercent) * 0.12 + Math.abs(yPercent) * 0.08; // zoom max ~1.2
-    cloud.style.transform = `translate(${xPercent * 28}px, ${yPercent * 18}px) scale(${scale})`;
+    const scale = 1 + Math.abs(xPercent) * 0.1 + Math.abs(yPercent) * 0.08;
+    cloud.style.transform = `translate(${xPercent * 25}px, ${yPercent * 15}px) scale(${scale})`;
   });
 
-  // page navigation
+  // navigation
   document.getElementById('homeTrigger')?.addEventListener('click', () => {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('feelingsPage').classList.add('active');
     loadAllNotes();
   });
 
-  // init session & auth listener
-  sb.auth.onAuthStateChange(async () => { await updateSession(); if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes(); });
+  sb.auth.onAuthStateChange(async () => { 
+    await updateSession(); 
+    if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
+  });
   (async () => { await updateSession(); })();
 </script>
 </body>
