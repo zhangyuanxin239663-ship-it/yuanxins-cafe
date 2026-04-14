@@ -1,546 +1,739 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yuanxin's Café</title>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-:root{
-  --bg:#0D0C0B;--border:rgba(255,255,255,0.08);--text:#E8E2DA;--muted:#6A6259;
-  --accent:#C8A97E;--danger:#B05040;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:22px 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,12,11,.92);backdrop-filter:blur(14px);}
-.logo{font-family:'EB Garamond',serif;font-style:italic;font-size:16px;letter-spacing:2px;color:var(--text);background:none;border:none;cursor:pointer;}
-.btn-o,.btn-s{font-size:11px;font-weight:300;letter-spacing:2px;text-transform:uppercase;padding:7px 16px;border-radius:2px;cursor:pointer;}
-.btn-o{border:1px solid var(--border);color:var(--muted);background:transparent;}
-.btn-o:hover{border-color:rgba(255,255,255,.18);color:var(--text);}
-.btn-s{background:var(--accent);color:#0D0C0B;border:none;}
-.btn-s:hover{opacity:.85;}
-.page{display:none;min-height:100vh;}
-.page.active{display:block;}
-.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(rgba(13,12,11,.6), rgba(13,12,11,.9)), url('bg.jpg');background-size:cover;}
-.h-name{font-family:'EB Garamond',serif;font-size:clamp(56px,12vw,120px);color:#fff;}
-.h-name em{color:var(--accent);font-style:italic;}
-.h-div{width:28px;height:1px;background:var(--accent);margin:28px auto;}
-.enter-btn{font-family:'EB Garamond',serif;font-size:18px;color:rgba(232,226,218,.75);background:none;border:none;cursor:pointer;}
-.enter-btn:hover{color:var(--accent);}
-.fp-wrap{max-width:680px;margin:0 auto;padding:100px 24px;}
-.fp-head{display:flex;justify-content:space-between;margin-bottom:40px;border-bottom:1px solid var(--border);padding-bottom:20px;}
-.fp-title{font-family:'EB Garamond',serif;font-size:36px;}
-.fp-title span{color:var(--accent);font-style:italic;}
-.fp-count{font-size:11px;color:var(--muted);}
-.compose{border:1px solid var(--border);padding:22px;margin-bottom:40px;}
-.c-top{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
-.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3A2010,var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;}
-.c-who{font-size:12px;color:var(--muted);}
-.c-ta{width:100%;min-height:88px;font-family:'EB Garamond',serif;font-size:18px;background:transparent;border:none;color:var(--text);resize:none;outline:none;}
-.c-ta::placeholder{color:rgba(232,226,218,.18);}
-.c-ft{display:flex;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
-.c-cnt{font-size:11px;color:var(--muted);}
-.btn-pub{font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:9px 20px;background:var(--accent);color:#0D0C0B;border:none;border-radius:2px;cursor:pointer;}
-.btn-pub:disabled{background:rgba(200,169,126,.18);}
-.post{padding:28px 0;border-bottom:1px solid var(--border);}
-.p-hd{display:flex;align-items:center;gap:11px;margin-bottom:12px;}
-.p-meta{flex:1;}
-.p-auth{font-family:'EB Garamond',serif;font-size:16px;color:var(--text);background:none;border:none;cursor:pointer;}
-.p-time{font-size:10px;color:var(--muted);margin-top:1px;}
-.p-body{font-family:'EB Garamond',serif;font-size:19px;line-height:1.8;margin-bottom:14px;}
-.p-acts{display:flex;gap:18px;}
-.pa{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;}
-.pa:hover{color:var(--accent);}
-.cmts-wrap{margin-top:14px;max-height:0;overflow:hidden;transition:max-height .3s;}
-.cmts-wrap.open{max-height:500px;}
-.cmts-inner{padding-left:18px;border-left:1px solid rgba(200,169,126,.15);}
-.cmt{padding:9px 0;border-bottom:1px solid var(--border);}
-.cmt:last-child{border:none;}
-.cmt-hd{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-.cmt-auth{font-size:12px;color:var(--accent);}
-.cmt-time{font-size:10px;color:var(--muted);margin-left:auto;}
-.cmt-body{font-family:'EB Garamond',serif;font-size:16px;}
-.cmt-form{display:flex;gap:8px;margin-top:14px;}
-.cmt-in{flex:1;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text);outline:none;}
-.btn-cmt{padding:9px 14px;background:transparent;border:1px solid var(--border);color:var(--accent);cursor:pointer;}
-.nr{text-align:center;padding:48px;color:var(--muted);font-style:italic;}
-.loading-msg{text-align:center;padding:48px;color:var(--muted);}
-.spin{display:inline-block;width:13px;height:13px;border:1.5px solid rgba(232,226,218,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:7px;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.ov{display:none;position:fixed;inset:0;background:rgba(5,4,3,.9);align-items:center;justify-content:center;z-index:300;}
-.ov.open{display:flex;}
-.modal{background:#111009;border:1px solid var(--border);width:100%;max-width:400px;padding:40px;position:relative;}
-.mx{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);cursor:pointer;}
-.m-title{font-family:'EB Garamond',serif;font-size:26px;}
-.m-sub{font-size:10px;color:var(--muted);margin-bottom:24px;}
-.fg{margin-bottom:13px;}
-.fg label{display:block;font-size:10px;color:var(--muted);margin-bottom:5px;}
-.fg input{width:100%;padding:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);outline:none;}
-.btn-sub{width:100%;padding:13px;background:var(--accent);color:#0D0C0B;border:none;cursor:pointer;}
-.soc-row{display:flex;gap:8px;margin-bottom:4px;}
-.s-btn{flex:1;padding:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text);cursor:pointer;}
-.div-or{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--muted);margin:18px 0;}
-.div-or::before,.div-or::after{content:'';flex:1;height:1px;background:var(--border);}
-.m-sw{text-align:center;margin-top:16px;font-size:12px;color:var(--muted);}
-.m-sw a{color:var(--accent);cursor:pointer;}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111009;border:1px solid var(--border);padding:10px 24px;font-size:11px;z-index:400;opacity:0;transition:opacity .3s;white-space:nowrap;}
-.toast.show{opacity:1;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>yuanxin's café · postcard wall</title>
+  <!-- Google Fonts: elegant serif + modern sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #0a0908;
+      font-family: 'Inter', sans-serif;
+      color: #ece8e0;
+      overflow-x: hidden;
+    }
+
+    /* --- custom cursor + parallax background --- */
+    .parallax-bg {
+      position: fixed;
+      top: -5%;
+      left: -5%;
+      width: 110%;
+      height: 110%;
+      background-image: url('bg.jpg');
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.85) contrast(1.05);
+      transition: transform 0.12s ease-out;
+      will-change: transform;
+      z-index: -2;
+    }
+
+    .overlay-dark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 30%, rgba(10,9,8,0.4) 0%, rgba(10,9,8,0.75) 100%);
+      z-index: -1;
+    }
+
+    /* --- navigation (clean, minimal) --- */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 28px 44px;
+      display: flex;
+      justify-content: flex-end;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      background: rgba(10,9,8,0.3);
+    }
+
+    .nav-auth {
+      display: flex;
+      gap: 14px;
+    }
+
+    .btn-outline, .btn-solid {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: none;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-outline {
+      border: 1px solid rgba(236,232,224,0.35);
+      color: #ece8e0;
+    }
+
+    .btn-outline:hover {
+      border-color: #c8aa6e;
+      color: #c8aa6e;
+      background: rgba(200,170,110,0.08);
+    }
+
+    .btn-solid {
+      background: #c8aa6e;
+      color: #0a0908;
+      font-weight: 600;
+    }
+
+    .btn-solid:hover {
+      background: #dfc18b;
+      transform: scale(0.97);
+    }
+
+    /* --- pages --- */
+    .page {
+      display: none;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* --- HOME: monumental typography + micro parallax --- */
+    .hero {
+      height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 28vh;
+      cursor: default;
+    }
+
+    .monumental-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(72px, 12vw, 170px);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #fef7ed;
+      text-align: center;
+      line-height: 1.08;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      cursor: pointer;
+      background: linear-gradient(135deg, #f3e9d2 0%, #e2cfaa 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: none;
+    }
+
+    .monumental-title:hover {
+      transform: scale(1.02);
+      letter-spacing: -0.01em;
+    }
+
+    /* --- postcard wall (grid) --- */
+    .wall-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 140px 40px 100px 40px;
+    }
+
+    .wall-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      margin-bottom: 56px;
+      border-bottom: 1px solid rgba(236,232,224,0.15);
+      padding-bottom: 20px;
+    }
+
+    .wall-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: -0.3px;
+    }
+
+    .wall-header h2 span {
+      color: #c8aa6e;
+      font-style: italic;
+    }
+
+    .post-count {
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: #b9aa8c;
+      background: rgba(200,170,110,0.12);
+      padding: 6px 14px;
+      border-radius: 60px;
+    }
+
+    /* postcard grid */
+    .post-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    /* individual postcard */
+    .postcard {
+      background: #fffef7;
+      border-radius: 20px;
+      padding: 0;
+      transition: all 0.25s ease;
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.35);
+      position: relative;
+      transform: rotate(var(--rot, 0deg));
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .postcard:hover {
+      transform: translateY(-8px) rotate(0deg);
+      box-shadow: 0 28px 40px -16px rgba(0,0,0,0.5);
+    }
+
+    /* color variants (paper tones) */
+    .postcard.cream { background: #fffef5; }
+    .postcard.ivory { background: #fef7e8; }
+    .postcard.mint { background: #f2f9f2; }
+    .postcard.lavender { background: #f8f3fc; }
+
+    /* pin effect */
+    .pin {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 28px;
+      height: 28px;
+      background: radial-gradient(circle, #e0b57a, #b87c4f);
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 3;
+      border: 1px solid rgba(255,215,150,0.6);
+    }
+
+    .card-inner {
+      padding: 28px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* dynamic user font style */
+    .post-content {
+      font-size: 18px;
+      line-height: 1.45;
+      word-break: break-word;
+      font-family: var(--post-font, 'Inter');
+      font-weight: 400;
+      color: #1f1e1a;
+    }
+
+    /* font style options */
+    .post-content.serif { font-family: 'Playfair Display', serif; font-weight: 450; }
+    .post-content.sans { font-family: 'Inter', sans-serif; font-weight: 400; letter-spacing: -0.2px; }
+    .post-content.modern { font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: -0.3px; }
+    .post-content.wavy { font-family: 'Inter', sans-serif; font-style: italic; font-weight: 350; }
+
+    .post-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      margin-top: 8px;
+      padding-top: 14px;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      color: #5f5b4e;
+      text-transform: uppercase;
+    }
+
+    .author-name {
+      font-weight: 600;
+      color: #b48c48;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      font-size: 12px;
+      color: #aa7a5c;
+      cursor: pointer;
+      transition: 0.1s;
+      padding: 4px 8px;
+      border-radius: 50px;
+    }
+
+    .delete-btn:hover {
+      background: #f2e3d4;
+      color: #bc5a3c;
+    }
+
+    /* floating add button */
+    .floating-add {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 64px;
+      height: 64px;
+      background: #c8aa6e;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+      z-index: 80;
+      font-size: 32px;
+      font-weight: 300;
+      color: #0a0908;
+      border: none;
+    }
+
+    .floating-add:hover {
+      transform: scale(1.05);
+      background: #e2bc7c;
+    }
+
+    /* MODAL (post creation) */
+    .modal-card {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(5,4,3,0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .modal-card.open {
+      display: flex;
+    }
+
+    .modal-inner {
+      background: #1e1b16;
+      max-width: 520px;
+      width: 90%;
+      border-radius: 32px;
+      padding: 32px;
+      border: 1px solid rgba(200,170,110,0.3);
+      box-shadow: 0 30px 40px rgba(0,0,0,0.4);
+    }
+
+    .modal-inner h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+
+    .style-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0 12px;
+    }
+
+    .color-chip {
+      width: 48px;
+      height: 48px;
+      border-radius: 60px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.1s;
+    }
+
+    .color-chip.cream { background: #fffef5; }
+    .color-chip.ivory { background: #fef7e8; }
+    .color-chip.mint { background: #f2f9f2; }
+    .color-chip.lavender { background: #f8f3fc; }
+    .color-chip.active { border-color: #c8aa6e; transform: scale(1.07); }
+
+    .font-option {
+      background: #2b2822;
+      padding: 8px 16px;
+      border-radius: 60px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.1s;
+      color: #ece8e0;
+    }
+
+    .font-option.active {
+      background: #c8aa6e;
+      color: #0a0908;
+    }
+
+    textarea {
+      width: 100%;
+      background: #2b2822;
+      border: 1px solid #4a443a;
+      padding: 14px;
+      color: #f2ede4;
+      font-size: 16px;
+      border-radius: 20px;
+      font-family: 'Inter', sans-serif;
+      resize: vertical;
+      margin: 12px 0;
+    }
+
+    .publish-btn {
+      width: 100%;
+      background: #c8aa6e;
+      border: none;
+      padding: 14px;
+      font-weight: 600;
+      border-radius: 44px;
+      margin-top: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #b9aa8c;
+    }
+
+    @media (max-width: 680px) {
+      .wall-wrap { padding: 120px 20px 80px; }
+      .post-grid { gap: 24px; }
+      .monumental-title { font-size: 64px; }
+      .hero { padding-top: 32vh; }
+    }
+  </style>
 </head>
 <body>
 
-<nav id="nav">
-  <button class="logo" onclick="showPage('home')">yuanxin's café</button>
-  <div class="nav-r" id="navAuth"></div>
+<div class="parallax-bg" id="parallaxBg"></div>
+<div class="overlay-dark"></div>
+
+<nav>
+  <div class="nav-auth" id="navAuth"></div>
 </nav>
 
+<!-- HOME PAGE -->
 <div class="page active" id="homePage">
-  <section class="hero">
-    <div class="hero-inner">
-      <h1 class="h-name">Yuanxin's<br><em>Café</em></h1>
-      <div class="h-div"></div>
-      <button class="enter-btn" onclick="showPage('feelings')">share your feelings →</button>
-    </div>
-  </section>
+  <div class="hero">
+    <div class="monumental-title" id="homeTitle">yuanxin’s<br>café</div>
+  </div>
 </div>
 
+<!-- POSTCARD WALL PAGE -->
 <div class="page" id="feelingsPage">
-  <div class="fp-wrap">
-    <div class="fp-head">
-      <h2 class="fp-title">Share Your <span>Feelings</span></h2>
-      <span class="fp-count" id="pCount"></span>
+  <div class="wall-wrap">
+    <div class="wall-header">
+      <h2>postcard wall <span>✦</span></h2>
+      <span class="post-count" id="pCount">0 notes</span>
     </div>
-    <div id="cArea"></div>
-    <div id="pFeed"></div>
+    <div id="pFeed" class="post-grid"></div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- FLOATING + BUTTON (appears only when logged in) -->
+<button class="floating-add" id="addPostBtn" style="display: none;">+</button>
+
+<!-- MODAL: new postcard -->
+<div class="modal-card" id="postModal">
+  <div class="modal-inner">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <h3>pin a new thought</h3>
+    <textarea id="newPostText" rows="3" placeholder="what’s on your mind?"></textarea>
+    
+    <div style="font-size: 13px; margin-top: 6px;">postcard color</div>
+    <div class="style-row" id="colorOptions">
+      <div class="color-chip cream" data-color="cream"></div>
+      <div class="color-chip ivory" data-color="ivory"></div>
+      <div class="color-chip mint" data-color="mint"></div>
+      <div class="color-chip lavender" data-color="lavender"></div>
+    </div>
+
+    <div style="font-size: 13px; margin-top: 6px;">font style</div>
+    <div class="style-row" id="fontOptions">
+      <div class="font-option" data-font="serif">Serif elegant</div>
+      <div class="font-option" data-font="sans">Clean sans</div>
+      <div class="font-option" data-font="modern">Modern bold</div>
+      <div class="font-option" data-font="wavy">Italic whisper</div>
+    </div>
+
+    <button class="publish-btn" id="doPublishBtn">✧ pin to wall ✧</button>
+  </div>
+</div>
+
 <script>
-// Supabase Config
-const SURL = 'https://kjgeitgrvljrqblbrcet.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZ2VpdGdydmxqcnFibGJyY2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTUyNDAsImV4cCI6MjA5MDY5MTI0MH0.WcWqqXlNAW0CycEnMNkgkKeAUVqMx-FES0cl_Bjucvw';
+  // SUPABASE CONFIG (REST + AUTH)
+  const SURL = 'https://kjgeitgrvljrqblbrcet.supabase.co';
+  const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZ2VpdGdydmxqcnFibGJyY2V0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMTUyNDAsImV4cCI6MjA5MDY5MTI0MH0.WcWqqXlNAW0CycEnMNkgkKeAUVqMx-FES0cl_Bjucvw';
+  const sb = supabase.createClient(SURL, SKEY);
 
-let currentUser = null;
-let currentProfile = null;
-let sessionToken = null;
+  let currentUser = null;
+  let currentProfile = null;
+  let sessionToken = null;
 
-// Helper functions
-function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function timeAgo(ts) {
-  const d = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(d/60000);
-  if(m<1) return 'just now';
-  if(m<60) return m+'m ago';
-  const h = Math.floor(m/60);
-  if(h<24) return h+'h ago';
-  return Math.floor(h/24)+'d ago';
-}
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// Direct REST API call (no Supabase client lock issues!)
-// Direct REST API call (no Supabase client lock issues!)
-async function restCall(path, options = {}) {
-  const headers = {
-    'apikey': SKEY,
-    'Content-Type': 'application/json'
-  };
-  if (sessionToken) {
-    headers['Authorization'] = 'Bearer ' + sessionToken;
+  // --- helper functions ---
+  function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function timeAgo(ts) {
+    const d = Date.now() - new Date(ts).getTime();
+    const m = Math.floor(d/60000);
+    if(m<1) return 'just now';
+    if(m<60) return m+'m ago';
+    const h = Math.floor(m/60);
+    if(h<24) return h+'h ago';
+    return Math.floor(h/24)+'d ago';
   }
-  
-  try {
-    const res = await fetch(SURL + '/rest/v1/' + path, {
-      ...options,
-      headers: headers
-    });
-    
-    // Handle empty responses (success with no content)
-    if (res.status === 204) {
-      return { success: true };
-    }
-    
-    // Get response text
+  function toast(msg) { alert(msg); } // simple for brevity, can be styled
+
+  // direct REST (handles empty JSON)
+  async function restCall(path, options = {}) {
+    const headers = { 'apikey': SKEY, 'Content-Type': 'application/json' };
+    if (sessionToken) headers['Authorization'] = 'Bearer ' + sessionToken;
+    const res = await fetch(SURL + '/rest/v1/' + path, { ...options, headers });
+    if (res.status === 204) return { success: true };
     const text = await res.text();
-    
-    // If empty response and not a GET request, return success
-    if (!text || text.trim() === '') {
-      return options.method === 'GET' ? [] : { success: true };
-    }
-    
-    // Parse JSON
+    if (!text || text.trim() === '') return options.method === 'GET' ? [] : { success: true };
     const data = JSON.parse(text);
-    
-    // Check for errors
-    if (!res.ok) {
-      throw new Error(data.message || JSON.stringify(data));
-    }
-    
+    if (!res.ok) throw new Error(data.message || 'api error');
     return data;
-  } catch (err) {
-    console.error('REST call error:', err);
-    throw err;
   }
-}
 
-// Navigation
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(page + 'Page').classList.add('active');
-  if (page === 'feelings') {
-    renderCompose();
-    loadPosts();
-  }
-}
-
-// Auth UI
-function renderNav() {
-  const container = document.getElementById('navAuth');
-  if (currentUser && currentProfile) {
-    container.innerHTML = `<button class="btn-o" onclick="doLogout()">Logout</button>`;
-  } else {
-    container.innerHTML = `<button class="btn-o" onclick="openModal('loginModal')">Login</button><button class="btn-s" onclick="openModal('registerModal')">Join</button>`;
-  }
-}
-
-// Modals
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// Initialize Supabase auth (just for login, not for DB queries)
-const sb = supabase.createClient(SURL, SKEY);
-
-async function updateSession() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    sessionToken = session.access_token;
-    currentUser = session.user;
-    await loadProfile();
-  } else {
-    sessionToken = null;
-    currentUser = null;
-    currentProfile = null;
-  }
-  renderNav();
-}
-
-// Load profile using REST
-async function loadProfile() {
-  if (!currentUser) return;
-  try {
-    const data = await restCall(`profiles?id=eq.${currentUser.id}&limit=1`);
-    if (data && data[0]) {
-      currentProfile = data[0];
+  // update session from supabase auth
+  async function updateSession() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      sessionToken = session.access_token;
+      currentUser = session.user;
+      await loadProfile();
     } else {
-      const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
-      const newProfile = await restCall('profiles', {
-        method: 'POST',
-        body: JSON.stringify({ id: currentUser.id, name, email: currentUser.email })
+      sessionToken = null; currentUser = null; currentProfile = null;
+    }
+    renderNav();
+    const addBtn = document.getElementById('addPostBtn');
+    if (addBtn) addBtn.style.display = currentUser ? 'flex' : 'none';
+  }
+
+  async function loadProfile() {
+    if (!currentUser) return;
+    try {
+      const data = await restCall(`profiles?id=eq.${currentUser.id}&limit=1`);
+      if (data && data[0]) { currentProfile = data[0]; }
+      else {
+        const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+        await restCall('profiles', { method: 'POST', body: JSON.stringify({ id: currentUser.id, name, email: currentUser.email }) });
+        currentProfile = { id: currentUser.id, name };
+      }
+    } catch(e) { console.warn(e); }
+  }
+
+  function renderNav() {
+    const container = document.getElementById('navAuth');
+    if (currentUser && currentProfile) {
+      container.innerHTML = `<button class="btn-outline" onclick="doLogout()">log out</button>`;
+    } else {
+      container.innerHTML = `<button class="btn-outline" onclick="openLoginModal()">log in</button><button class="btn-solid" onclick="openRegisterModal()">join</button>`;
+    }
+  }
+
+  // ---- MODALS (login/register simplified) ----
+  function openLoginModal() { document.getElementById('loginModal').classList.add('open'); }
+  function openRegisterModal() { document.getElementById('registerModal').classList.add('open'); }
+  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+  async function doLogin() {
+    const email = document.getElementById('lEmail').value.trim();
+    const pass = document.getElementById('lPass').value;
+    if (!email || !pass) { alert('fill fields'); return; }
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if (error) { alert(error.message); return; }
+    await updateSession();
+    closeModal('loginModal');
+    if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts();
+  }
+
+  async function doRegister() {
+    const first = document.getElementById('rFirst').value.trim();
+    const last = document.getElementById('rLast').value.trim();
+    const email = document.getElementById('rEmail').value.trim();
+    const pass = document.getElementById('rPass').value;
+    if (!first || !email || !pass) { alert('fill fields'); return; }
+    if (pass.length < 6) { alert('min 6 chars'); return; }
+    const name = first + (last ? ' ' + last : '');
+    const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+    if (error) { alert(error.message); return; }
+    await updateSession();
+    closeModal('registerModal');
+  }
+
+  async function googleLogin() {
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    if (error) alert(error.message);
+  }
+
+  async function doLogout() {
+    await sb.auth.signOut();
+    sessionToken = null; currentUser = null; currentProfile = null;
+    renderNav();
+    document.getElementById('addPostBtn').style.display = 'none';
+    showPage('home');
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    if (page === 'feelings') loadPosts();
+  }
+
+  // ---- LOAD POSTCARDS ----
+  async function loadPosts() {
+    const feed = document.getElementById('pFeed');
+    feed.innerHTML = '<div class="loading-msg" style="text-align:center; padding:60px;">loading postcards...</div>';
+    try {
+      const posts = await restCall('posts?order=created_at.desc');
+      document.getElementById('pCount').innerText = (posts?.length || 0) + ' notes';
+      if (!posts || posts.length === 0) { feed.innerHTML = '<div style="text-align:center; padding:60px;">no postcards yet. pin the first ✦</div>'; return; }
+      
+      feed.innerHTML = posts.map(post => {
+        const canDelete = currentUser && currentUser.id === post.user_id;
+        const randomRot = (Math.random() * 2 - 1) * 1.2;
+        const colorClass = post.card_color || 'cream';
+        const fontClass = post.font_style || 'serif';
+        return `
+          <div class="postcard ${colorClass}" style="--rot: ${randomRot}deg;">
+            <div class="pin"></div>
+            <div class="card-inner">
+              <div class="post-content ${fontClass}" style="--post-font: inherit;">${esc(post.content)}</div>
+              <div class="post-meta">
+                <span class="author-name">${esc(post.author_name || 'anonymous')}</span>
+                <span>${timeAgo(post.created_at)}</span>
+                ${canDelete ? `<button class="delete-btn" data-id="${post.id}">✕ delete</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      // attach delete events
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          deletePost(id);
+        });
       });
-      currentProfile = newProfile?.[0] || { id: currentUser.id, name };
-    }
-  } catch (err) {
-    console.error('Profile error:', err);
+    } catch(e) { feed.innerHTML = '<div style="text-align:center;">could not load, refresh page</div>'; }
   }
-}
 
-// Login/Register
-async function doLogin() {
-  const email = document.getElementById('lEmail').value.trim();
-  const pass = document.getElementById('lPass').value;
-  if (!email || !pass) { toast('Please fill all fields'); return; }
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { toast(error.message); return; }
-  await updateSession();
-  closeModal('loginModal');
-  toast('Welcome back!');
-  if (document.getElementById('feelingsPage').classList.contains('active')) {
-    renderCompose();
+  async function deletePost(id) {
+    if (!currentUser || !confirm('remove this postcard?')) return;
+    await restCall(`posts?id=eq.${id}&user_id=eq.${currentUser.id}`, { method: 'DELETE' });
     loadPosts();
   }
-}
 
-async function doRegister() {
-  const first = document.getElementById('rFirst').value.trim();
-  const last = document.getElementById('rLast').value.trim();
-  const email = document.getElementById('rEmail').value.trim();
-  const pass = document.getElementById('rPass').value;
-  if (!first || !email || !pass) { toast('Please fill all fields'); return; }
-  if (pass.length < 6) { toast('Password needs 6+ characters'); return; }
-  const name = first + (last ? ' ' + last : '');
-  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
-  if (error) { toast(error.message); return; }
-  await updateSession();
-  closeModal('registerModal');
-  toast('Welcome ' + first + '!');
-}
-
-async function googleLogin() {
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
-  if (error) toast(error.message);
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  sessionToken = null;
-  currentUser = null;
-  currentProfile = null;
-  renderNav();
-  showPage('home');
-  toast('See you soon');
-}
-
-// Compose box
-function renderCompose() {
-  const area = document.getElementById('cArea');
-  if (!currentUser) {
-    area.innerHTML = `<div style="text-align:center;padding:40px;border:1px dashed var(--border);"><p>Sign in to share your feelings.</p><button class="btn-pub" onclick="openModal('loginModal')">Join the conversation</button></div>`;
-    return;
-  }
-  if (!currentProfile) {
-    area.innerHTML = `<div class="loading-msg"><span class="spin"></span>Loading...</div>`;
-    setTimeout(renderCompose, 500);
-    return;
-  }
-  area.innerHTML = `<div class="compose"><div class="c-top"><div class="av">${(currentProfile.name || '?')[0]}</div><span class="c-who">${esc(currentProfile.name || 'You')}</span></div><textarea class="c-ta" id="cTA" maxlength="1000" placeholder="What are you feeling today…" oninput="updateCharCount()"></textarea><div class="c-ft"><span class="c-cnt" id="cCnt">0 / 1000</span><button class="btn-pub" id="pubBtn" onclick="publishPost()" disabled>Publish</button></div></div>`;
-}
-
-function updateCharCount() {
-  const ta = document.getElementById('cTA');
-  const btn = document.getElementById('pubBtn');
-  const cnt = document.getElementById('cCnt');
-  if (!ta) return;
-  cnt.textContent = ta.value.length + ' / 1000';
-  btn.disabled = ta.value.trim().length === 0;
-}
-async function publishPost() {
-  const ta = document.getElementById('cTA');
-  const text = ta.value.trim();
-  if (!text || !currentUser || !currentProfile) return;
-  
-  const btn = document.getElementById('pubBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>';
-  
-  try {
-    await restCall('posts', {
-      method: 'POST',
-      body: JSON.stringify({
-        user_id: currentUser.id,
-        author_name: currentProfile.name || 'Anonymous',
-        content: text
-      })
-    });
-    
-    ta.value = '';
-    updateCharCount();
-    await loadPosts();
-    toast('✨ Shared!');
-  } catch (err) {
-    console.error('Post error:', err);
-    toast('Error posting - please try again');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Publish';
-  }
-}
-
-// Load posts using REST
-async function loadPosts() {
-  const feed = document.getElementById('pFeed');
-  feed.innerHTML = '<div class="loading-msg"><span class="spin"></span>Loading feelings...</div>';
-  
-  try {
-    const posts = await restCall('posts?order=created_at.desc');
-    
-    document.getElementById('pCount').textContent = (posts || []).length + ' feelings';
-    
-    if (!posts || posts.length === 0) {
-      feed.innerHTML = '<p class="nr">Nothing yet — be the first to share.</p>';
-      return;
+  // ---- CREATE POSTCARD (with color & font) ----
+  let selectedColor = 'cream';
+  let selectedFont = 'serif';
+  document.getElementById('colorOptions')?.addEventListener('click', (e) => {
+    const chip = e.target.closest('.color-chip');
+    if(chip) {
+      document.querySelectorAll('.color-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      selectedColor = chip.dataset.color;
     }
-    
-    feed.innerHTML = posts.map(post => {
-      const canDelete = currentUser && currentUser.id === post.user_id;
-      return `
-        <div class="post" id="post-${post.id}">
-          <div class="p-hd">
-            <div class="av">${(post.author_name || '?')[0]}</div>
-            <div class="p-meta">
-              <button class="p-auth">${esc(post.author_name || 'Anonymous')}</button>
-              <div class="p-time">${timeAgo(post.created_at)}</div>
-            </div>
-          </div>
-          <div class="p-body">${esc(post.content)}</div>
-          <div class="p-acts">
-            <button class="pa" onclick="toggleComments('${post.id}')">💬 <span id="cc-${post.id}">0</span> replies</button>
-            ${canDelete ? `<button class="pa" onclick="deletePost('${post.id}')" style="color:var(--danger);">Delete</button>` : ''}
-          </div>
-          <div class="cmts-wrap" id="cmw-${post.id}">
-            <div class="cmts-inner" id="cmi-${post.id}">
-              <div class="loading-msg" style="padding:20px;"><span class="spin"></span> Loading replies...</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-    
-    // Load comments for each post
-    for (let post of posts) {
-      loadCommentsForPost(post.id);
+  });
+  document.getElementById('fontOptions')?.addEventListener('click', (e) => {
+    const opt = e.target.closest('.font-option');
+    if(opt) {
+      document.querySelectorAll('.font-option').forEach(f => f.classList.remove('active'));
+      opt.classList.add('active');
+      selectedFont = opt.dataset.font;
     }
-  } catch (err) {
-    console.error('Load posts error:', err);
-    feed.innerHTML = '<p class="nr">Could not load posts. <button onclick="loadPosts()" style="background:var(--accent);color:#0D0C0B;border:none;padding:8px 16px;border-radius:2px;cursor:pointer;margin-top:16px;">Try Again</button></p>';
-  }
-}
+  });
 
-async function loadCommentsForPost(postId) {
-  try {
-    const comments = await restCall(`comments?post_id=eq.${postId}&order=created_at.asc`);
-    
-    const commentCount = document.getElementById(`cc-${postId}`);
-    if (commentCount) commentCount.textContent = comments?.length || 0;
-    
-    const inner = document.getElementById(`cmi-${postId}`);
-    if (!inner) return;
-    
-    if (!comments || comments.length === 0) {
-      inner.innerHTML = `<p class="no-cmt">No replies yet...</p>
-        ${currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply..." onkeypress="if(event.key==='Enter')addComment('${postId}')"><button class="btn-cmt" onclick="addComment('${postId}')">Send</button></div>` : '<p class="sign-cmt"><a onclick="openModal(\'loginModal\')">Sign in</a> to reply</p>'}`;
-      return;
+  async function publishPostcard() {
+    if (!currentUser) { alert('please log in to pin a postcard'); return; }
+    const text = document.getElementById('newPostText').value.trim();
+    if (!text) { alert('write something first'); return; }
+    const btn = document.getElementById('doPublishBtn');
+    btn.innerText = 'pinning...';
+    try {
+      await restCall('posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          author_name: currentProfile?.name || 'visitor',
+          content: text,
+          card_color: selectedColor,
+          font_style: selectedFont
+        })
+      });
+      document.getElementById('newPostText').value = '';
+      closeModal('postModal');
+      if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts();
+      else showPage('feelings');
+    } catch(err) { alert('error publishing'); } finally { btn.innerText = '✧ pin to wall ✧'; }
+  }
+
+  // ---- INTERACTIONS ----
+  document.getElementById('homeTitle')?.addEventListener('click', () => showPage('feelings'));
+  document.getElementById('addPostBtn')?.addEventListener('click', () => {
+    if (!currentUser) { alert('log in to add a postcard'); openLoginModal(); return; }
+    document.getElementById('postModal').classList.add('open');
+  });
+  window.closeModal = (id) => document.getElementById(id)?.classList.remove('open');
+  document.getElementById('doPublishBtn')?.addEventListener('click', publishPostcard);
+  
+  // background parallax on mousemove
+  document.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 12;
+    const y = (e.clientY / window.innerHeight - 0.5) * 8;
+    document.getElementById('parallaxBg').style.transform = `translate(${x}px, ${y}px)`;
+  });
+
+  // init
+  sb.auth.onAuthStateChange(async () => { await updateSession(); if (document.getElementById('feelingsPage').classList.contains('active')) loadPosts(); });
+  (async () => { await updateSession(); })();
+
+  // modals HTML quick append (login/register exist in original but to be safe we add minimal)
+  function injectModals() {
+    if(!document.getElementById('loginModal')) {
+      const loginDiv = document.createElement('div'); loginDiv.className = 'modal-card'; loginDiv.id = 'loginModal';
+      loginDiv.innerHTML = `<div class="modal-inner"><span class="close-modal" onclick="closeModal('loginModal')">&times;</span><h3>welcome back</h3><div class="fg"><input type="email" id="lEmail" placeholder="email"></div><div class="fg"><input type="password" id="lPass" placeholder="password"></div><button class="publish-btn" onclick="doLogin()">enter</button><div class="m-sw">new? <a onclick="closeModal('loginModal');openRegisterModal()">create account</a></div><div class="soc-row"><button class="s-btn" onclick="googleLogin()">google</button></div></div>`;
+      document.body.appendChild(loginDiv);
+      const regDiv = document.createElement('div'); regDiv.className = 'modal-card'; regDiv.id = 'registerModal';
+      regDiv.innerHTML = `<div class="modal-inner"><span class="close-modal" onclick="closeModal('registerModal')">&times;</span><h3>join café</h3><div class="fg"><input id="rFirst" placeholder="first name"></div><div class="fg"><input id="rLast" placeholder="last name"></div><div class="fg"><input id="rEmail" placeholder="email"></div><div class="fg"><input id="rPass" placeholder="password"></div><button class="publish-btn" onclick="doRegister()">create</button><div class="m-sw">member? <a onclick="closeModal('registerModal');openLoginModal()">sign in</a></div><div class="soc-row"><button class="s-btn" onclick="googleLogin()">google</button></div></div>`;
+      document.body.appendChild(regDiv);
     }
-    
-    const list = comments.map(c => `
-      <div class="cmt">
-        <div class="cmt-hd">
-          <span class="cmt-auth">${esc(c.author_name)}</span>
-          <span class="cmt-time">${timeAgo(c.created_at)}</span>
-        </div>
-        <div class="cmt-body">${esc(c.text)}</div>
-      </div>
-    `).join('');
-    
-    inner.innerHTML = list + (currentUser ? `<div class="cmt-form"><input class="cmt-in" type="text" id="ci-${postId}" placeholder="Reply..." onkeypress="if(event.key==='Enter')addComment('${postId}')"><button class="btn-cmt" onclick="addComment('${postId}')">Send</button></div>` : '<p class="sign-cmt"><a onclick="openModal(\'loginModal\')">Sign in</a> to reply</p>');
-  } catch (err) {
-    console.error('Error loading comments:', err);
   }
-}
-
-function toggleComments(postId) {
-  const el = document.getElementById('cmw-' + postId);
-  el.classList.toggle('open');
-}
-
-async function addComment(postId) {
-  if (!currentUser) { openModal('loginModal'); return; }
-  const input = document.getElementById('ci-' + postId);
-  const text = input.value.trim();
-  if (!text) return;
-  
-  input.disabled = true;
-  
-  try {
-    await restCall('comments', {
-      method: 'POST',
-      body: JSON.stringify({
-        post_id: postId,
-        user_id: currentUser.id,
-        author_name: currentProfile?.name || 'Anonymous',
-        text: text
-      })
-    });
-    
-    input.value = '';
-    await loadCommentsForPost(postId);
-    
-    const comments = await restCall(`comments?post_id=eq.${postId}`);
-    const commentCount = document.getElementById(`cc-${postId}`);
-    if (commentCount) commentCount.textContent = comments?.length || 0;
-    
-    toast('Replied');
-  } catch (err) {
-    toast('Could not post reply');
-  } finally {
-    input.disabled = false;
-  }
-}
-
-async function deletePost(postId) {
-  if (!confirm('Delete this feeling?')) return;
-  
-  try {
-    await restCall(`posts?id=eq.${postId}&user_id=eq.${currentUser.id}`, { method: 'DELETE' });
-    await loadPosts();
-    toast('Deleted');
-  } catch (err) {
-    toast('Could not delete');
-  }
-}
-
-// Auth state listener
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    sessionToken = session.access_token;
-    currentUser = session.user;
-    await loadProfile();
-  } else {
-    sessionToken = null;
-    currentUser = null;
-    currentProfile = null;
-  }
-  renderNav();
-  if (document.getElementById('feelingsPage').classList.contains('active')) {
-    renderCompose();
-    loadPosts();
-  }
-});
-
-// Initialize
-(async () => {
-  await updateSession();
-  renderNav();
-})();
+  injectModals();
+  // default selected style
+  document.querySelector('.color-chip.cream')?.classList.add('active');
+  document.querySelector('.font-option.serif')?.classList.add('active');
 </script>
-
-<!-- Login Modal -->
-<div class="ov" id="loginModal">
-  <div class="modal">
-    <button class="mx" onclick="closeModal('loginModal')">✕</button>
-    <h2 class="m-title">Welcome back</h2>
-    <p class="m-sub">Sign in</p>
-    <div class="soc-row">
-      <button class="s-btn" onclick="googleLogin()">Google</button>
-    </div>
-    <div class="div-or">or email</div>
-    <div class="fg"><label>Email</label><input type="email" id="lEmail"></div>
-    <div class="fg"><label>Password</label><input type="password" id="lPass"></div>
-    <button class="btn-sub" onclick="doLogin()">Enter</button>
-    <div class="m-sw">New here? <a onclick="closeModal('loginModal');openModal('registerModal')">Create account</a></div>
-  </div>
-</div>
-
-<div class="ov" id="registerModal">
-  <div class="modal">
-    <button class="mx" onclick="closeModal('registerModal')">✕</button>
-    <h2 class="m-title">Join us</h2>
-    <p class="m-sub">Create account</p>
-    <div class="fgr">
-      <div class="fg"><label>First Name</label><input type="text" id="rFirst"></div>
-      <div class="fg"><label>Last Name</label><input type="text" id="rLast"></div>
-    </div>
-    <div class="fg"><label>Email</label><input type="email" id="rEmail"></div>
-    <div class="fg"><label>Password</label><input type="password" id="rPass"></div>
-    <button class="btn-sub" onclick="doRegister()">Create Account</button>
-    <div class="m-sw">Already a member? <a onclick="closeModal('registerModal');openModal('loginModal')">Sign in</a></div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
 </body>
 </html>
