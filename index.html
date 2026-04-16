@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-  <title>yuanxin's café · persistent wall</title>
+  <title>yuanxin's café · movable notes</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -11,6 +11,7 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -18,6 +19,7 @@
       font-family: 'Inter', sans-serif;
       overflow-x: hidden;
       min-height: 100vh;
+      touch-action: none; /* improves touch dragging */
     }
 
     .cloud-bg {
@@ -89,41 +91,38 @@
       min-height: 100vh;
       width: 100%;
       padding: 40px 30px 140px 30px;
+      touch-action: none;
     }
 
-    .login-corner-btn {
+    .login-corner-btn, .user-corner-btn {
       position: fixed;
       bottom: 28px;
       right: 28px;
+      z-index: 150;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .login-corner-btn {
       background: #c8aa6e;
       border: none;
       padding: 14px 28px;
       border-radius: 60px;
       font-weight: 600;
-      cursor: pointer;
-      z-index: 150;
-      font-size: 14px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      font-family: 'Inter', sans-serif;
       color: #0a0908;
     }
     .user-corner-btn {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
       background: #1e1b16ee;
       backdrop-filter: blur(16px);
       border: 1px solid rgba(200,170,110,0.5);
       padding: 10px 20px;
       border-radius: 60px;
-      cursor: pointer;
-      z-index: 150;
-      font-size: 14px;
       color: #e2cfaa;
       display: flex;
       align-items: center;
       gap: 10px;
-      font-family: 'Inter', sans-serif;
     }
 
     .modal-overlay {
@@ -198,34 +197,50 @@
       margin-top: -20px;
     }
 
+    /* STICKY NOTES - improved touch support */
     .sticky-note {
       position: absolute;
       min-width: 200px;
       max-width: 280px;
-      background: #fffef7;
       border-radius: 24px;
       padding: 0;
       box-shadow: 0 12px 24px -10px rgba(0,0,0,0.3);
       cursor: grab;
       z-index: 10;
       transition: box-shadow 0.1s;
+      touch-action: none;
     }
     @media (max-width: 680px) {
-      .sticky-note { min-width: 170px; max-width: 220px; }
+      .sticky-note { min-width: 180px; max-width: 240px; }
     }
     .sticky-note:active { cursor: grabbing; z-index: 999; }
-    .note-cream { background: #fffef5; }
-    .note-ivory { background: #fef7e8; }
-    .note-mint { background: #f2f9f2; }
-    .note-lavender { background: #f8f3fc; }
-    .note-peach { background: #fff2e6; }
-    .note-sky { background: #eef5ff; }
-    .note-rose { background: #fff0f2; }
-    .note-butter { background: #fff8e0; }
-    .note-seafoam { background: #e9f4ef; }
-    .note-terracotta { background: #fceaea; }
-    .note-mauve { background: #f5ecf0; }
-    .note-citrus { background: #fff7e0; }
+    
+    /* Card colors */
+    .card-cream { background: #fffef5; }
+    .card-ivory { background: #fef7e8; }
+    .card-mint { background: #f2f9f2; }
+    .card-lavender { background: #f8f3fc; }
+    .card-peach { background: #fff2e6; }
+    .card-sky { background: #eef5ff; }
+    .card-rose { background: #fff0f2; }
+    .card-butter { background: #fff8e0; }
+    .card-seafoam { background: #e9f4ef; }
+    .card-terracotta { background: #fceaea; }
+    .card-mauve { background: #f5ecf0; }
+    .card-citrus { background: #fff7e0; }
+    .card-red { background: #ffe8e8; }
+    .card-blue { background: #e8f0ff; }
+    .card-black { background: #f0f0f0; }
+    .card-white { background: #ffffff; }
+    .card-yellow { background: #fffbe0; }
+
+    /* Text colors */
+    .text-dark { color: #1f1e1a; }
+    .text-red { color: #dc2626; }
+    .text-blue { color: #2563eb; }
+    .text-black { color: #000000; }
+    .text-white { color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+    .text-yellow { color: #ca8a04; }
 
     .pin-icon {
       position: absolute;
@@ -253,7 +268,6 @@
       line-height: 1.45;
       word-break: break-word;
       font-family: 'Inter', sans-serif;
-      color: #1f1e1a;
       max-height: 280px;
       overflow-y: auto;
     }
@@ -306,22 +320,39 @@
       font-size: 13px;
       resize: vertical;
     }
-    .color-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-    .color-dot {
-      width: 28px;
-      height: 28px;
+    .color-row, .text-color-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 5px 0;
+    }
+    .color-chip, .text-chip {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       cursor: pointer;
       border: 2px solid transparent;
+      transition: 0.1s;
     }
-    .color-dot.selected { border-color: #c8aa6e; transform: scale(1.1); }
-    .inline-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .text-chip {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .color-chip.selected, .text-chip.selected { border-color: #c8aa6e; transform: scale(1.1); }
+    .inline-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
     .inline-post-btn, .inline-cancel-btn {
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 40px;
       font-weight: 600;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 12px;
     }
     .inline-post-btn { background: #c8aa6e; border: none; }
     .inline-cancel-btn { background: #4a443a; border: none; color: #ece8e0; }
@@ -339,6 +370,7 @@
       opacity: 0;
       transition: 0.1s;
       color: #e2cfaa;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -372,7 +404,28 @@
   const sb = supabase.createClient(SURL, SKEY);
 
   let currentUser = null, currentProfile = null, sessionToken = null;
-  let dragActive = false, currentDragElement = null, dragStartX = 0, dragStartY = 0, initialLeft = 0, initialTop = 0, currentDragId = null;
+  let dragActive = false, currentDragElement = null, currentDragId = null;
+  let dragStartX = 0, dragStartY = 0, initialLeft = 0, initialTop = 0;
+
+  // Card colors and text colors options
+  const cardColors = [
+    { name: 'cream', bg: '#fffef5' }, { name: 'ivory', bg: '#fef7e8' },
+    { name: 'mint', bg: '#f2f9f2' }, { name: 'lavender', bg: '#f8f3fc' },
+    { name: 'peach', bg: '#fff2e6' }, { name: 'sky', bg: '#eef5ff' },
+    { name: 'rose', bg: '#fff0f2' }, { name: 'butter', bg: '#fff8e0' },
+    { name: 'red', bg: '#ffe8e8' }, { name: 'blue', bg: '#e8f0ff' },
+    { name: 'black', bg: '#f0f0f0' }, { name: 'white', bg: '#ffffff' },
+    { name: 'yellow', bg: '#fffbe0' }
+  ];
+  
+  const textColors = [
+    { name: 'dark', color: '#1f1e1a', label: '⚫' },
+    { name: 'red', color: '#dc2626', label: '🔴' },
+    { name: 'blue', color: '#2563eb', label: '🔵' },
+    { name: 'black', color: '#000000', label: '◼️' },
+    { name: 'white', color: '#ffffff', label: '⚪' },
+    { name: 'yellow', color: '#ca8a04', label: '🟡' }
+  ];
 
   function toastMsg(msg) {
     const t = document.getElementById('liveToast');
@@ -408,6 +461,9 @@
       sessionToken = null; currentUser = null; currentProfile = null;
     }
     updateUIButtons();
+    if (document.getElementById('feelingsPage').classList.contains('active')) {
+      loadAllNotes();
+    }
   }
 
   async function loadProfile() {
@@ -473,10 +529,10 @@
     const email = document.getElementById('loginEmail')?.value.trim();
     const pass = document.getElementById('loginPassword')?.value;
     if (!email || !pass) { toastMsg('enter email & password'); return; }
-    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) { toastMsg(error.message); return; }
-    await updateSession(); closeAuthModal();
-    if (document.getElementById('feelingsPage').classList.contains('active')) loadAllNotes();
+    await updateSession();
+    closeAuthModal();
     toastMsg('welcome!');
   }
   
@@ -488,7 +544,8 @@
     if (pass.length < 6) { toastMsg('password min 6'); return; }
     const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
     if (error) { toastMsg(error.message); return; }
-    toastMsg('account created! please log in'); openAuthModal('login');
+    toastMsg('account created! please log in'); 
+    openAuthModal('login');
   }
   
   async function googleLogin() {
@@ -496,42 +553,32 @@
     if (error) toastMsg(error.message);
   }
 
-  // DRAG WITH POSITION SAVING
-  function makeDraggable(el, postId) {
-    el.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.delete-note') || e.target.closest('.inline-editor')) return;
-      e.preventDefault();
-      dragActive = true;
-      currentDragElement = el;
-      currentDragId = postId;
-      const rect = el.getBoundingClientRect();
-      const containerRect = document.getElementById('wallContainer').getBoundingClientRect();
-      initialLeft = rect.left - containerRect.left;
-      initialTop = rect.top - containerRect.top;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      el.style.cursor = 'grabbing';
-      el.style.zIndex = '1000';
-    });
+  // Touch + Mouse drag handling
+  function startDrag(e, el, id) {
+    if (e.target.closest('.delete-note') || e.target.closest('.inline-editor')) return;
+    e.preventDefault();
+    dragActive = true;
+    currentDragElement = el;
+    currentDragId = id;
+    const rect = el.getBoundingClientRect();
+    const containerRect = document.getElementById('wallContainer').getBoundingClientRect();
+    initialLeft = rect.left - containerRect.left;
+    initialTop = rect.top - containerRect.top;
+    const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
+    const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
+    dragStartX = clientX;
+    dragStartY = clientY;
+    el.style.cursor = 'grabbing';
+    el.style.zIndex = '1000';
   }
 
-  async function savePosition(postId, left, top) {
-    if (!postId) return;
-    try {
-      await restCall(`posts?id=eq.${postId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ pos_x: Math.round(left), pos_y: Math.round(top) })
-      });
-    } catch(e) { 
-      // Silently fail if columns don't exist yet - they will after SQL is run
-      console.log('Position save skipped - columns may not exist yet');
-    }
-  }
-
-  window.addEventListener('mousemove', (e) => {
+  function onDragMove(e) {
     if (!dragActive || !currentDragElement) return;
-    const dx = e.clientX - dragStartX;
-    const dy = e.clientY - dragStartY;
+    e.preventDefault();
+    const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
+    const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
+    const dx = clientX - dragStartX;
+    const dy = clientY - dragStartY;
     let newLeft = initialLeft + dx;
     let newTop = initialTop + dy;
     const container = document.getElementById('wallContainer');
@@ -541,38 +588,52 @@
     newTop = Math.min(Math.max(0, newTop), maxTop);
     currentDragElement.style.left = newLeft + 'px';
     currentDragElement.style.top = newTop + 'px';
-  });
+  }
 
-  window.addEventListener('mouseup', async () => {
+  async function endDrag() {
     if (dragActive && currentDragElement && currentDragId) {
       const left = parseFloat(currentDragElement.style.left);
       const top = parseFloat(currentDragElement.style.top);
       await savePosition(currentDragId, left, top);
       currentDragElement.style.cursor = 'grab';
       currentDragElement.style.zIndex = '';
-      dragActive = false;
-      currentDragElement = null;
-      currentDragId = null;
-    } else if (dragActive) {
-      dragActive = false;
-      if (currentDragElement) currentDragElement.style.cursor = 'grab';
-      currentDragElement = null;
     }
-  });
+    dragActive = false;
+    currentDragElement = null;
+    currentDragId = null;
+  }
+
+  function makeDraggable(el, postId) {
+    el.addEventListener('mousedown', (e) => startDrag(e, el, postId));
+    el.addEventListener('touchstart', (e) => startDrag(e, el, postId), { passive: false });
+  }
+
+  async function savePosition(postId, left, top) {
+    if (!postId) return;
+    try {
+      await restCall(`posts?id=eq.${postId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ pos_x: Math.round(left), pos_y: Math.round(top) })
+      });
+    } catch(e) { console.log('Position save issue:', e); }
+  }
+
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('mouseup', endDrag);
+  window.addEventListener('touchmove', onDragMove, { passive: false });
+  window.addEventListener('touchend', endDrag);
 
   function randomPosition(element, index) {
     const container = document.getElementById('wallContainer');
     if (!container) return { left: 20, top: 20 };
-    const maxW = Math.max(container.clientWidth - element.offsetWidth, 100);
+    const maxW = Math.max(container.clientWidth - element.offsetWidth, 150);
     const maxH = Math.max(container.clientHeight - element.offsetHeight, 200);
     const seed = (index * 131) % 1000;
     const left = (seed * 17) % maxW;
-    const top = ((seed * 43) % maxH) + 30;
+    const top = ((seed * 43) % maxH) + 50;
     return { left: Math.min(maxW - 20, left), top: Math.min(maxH - 40, top) };
   }
 
-  const colorClasses = ['cream', 'ivory', 'mint', 'lavender', 'peach', 'sky', 'rose', 'butter', 'seafoam', 'terracotta', 'mauve', 'citrus'];
-  
   async function loadAllNotes() {
     const container = document.getElementById('wallContainer');
     if (!container) return;
@@ -580,17 +641,20 @@
     try {
       const posts = await restCall('posts?order=created_at.desc');
       const notes = posts || [];
+      
       for (let idx = 0; idx < notes.length; idx++) {
         const note = notes[idx];
         const canDelete = currentUser && currentUser.id === note.user_id;
-        const colorClass = colorClasses[idx % colorClasses.length];
+        const cardColor = note.card_color || cardColors[idx % cardColors.length].name;
+        const textColorClass = note.text_color ? `text-${note.text_color}` : 'text-dark';
+        
         const noteDiv = document.createElement('div');
-        noteDiv.className = `sticky-note note-${colorClass}`;
+        noteDiv.className = `sticky-note card-${cardColor}`;
         noteDiv.setAttribute('data-id', note.id);
         noteDiv.innerHTML = `
           <div class="pin-icon"></div>
           <div class="note-inner">
-            <div class="note-text">${escapeHtml(note.content)}</div>
+            <div class="note-text ${textColorClass}">${escapeHtml(note.content)}</div>
             <div class="note-footer">
               <button class="note-author">${escapeHtml(note.author_name || 'anonymous')}</button>
               <span>${timeAgo(note.created_at)}</span>
@@ -601,7 +665,7 @@
         container.appendChild(noteDiv);
         
         let leftPos, topPos;
-        if (note.pos_x !== undefined && note.pos_x !== null && note.pos_y !== undefined && note.pos_y !== null) {
+        if (note.pos_x !== null && note.pos_x !== undefined && note.pos_y !== null && note.pos_y !== undefined) {
           leftPos = note.pos_x;
           topPos = note.pos_y;
           const maxLeft = container.clientWidth - noteDiv.offsetWidth;
@@ -612,6 +676,7 @@
           const rand = randomPosition(noteDiv, idx);
           leftPos = rand.left;
           topPos = rand.top;
+          await savePosition(note.id, leftPos, topPos);
         }
         noteDiv.style.position = 'absolute';
         noteDiv.style.left = leftPos + 'px';
@@ -630,7 +695,7 @@
         });
       }
       
-      // + ADD NOTE
+      // Movable + ADD NOTE
       const addSticky = document.createElement('div');
       addSticky.className = 'sticky-note add-note';
       addSticky.innerHTML = `<div class="pin-icon"></div><div class="add-plus">+</div>`;
@@ -640,21 +705,27 @@
       addSticky.style.left = addPos.left + 'px';
       addSticky.style.top = addPos.top + 'px';
       addSticky.style.cursor = 'pointer';
+      makeDraggable(addSticky, null);
       
-      addSticky.addEventListener('click', async () => {
-        if (!currentUser) { toastMsg('please log in to post'); openAuthModal('login'); return; }
+      addSticky.addEventListener('click', async (e) => {
+        e.stopPropagation();
         if (addSticky.querySelector('.inline-editor')) return;
-        addSticky.style.width = '270px';
+        if (!currentUser) { toastMsg('please log in to post'); openAuthModal('login'); return; }
+        
+        addSticky.style.width = '300px';
         addSticky.style.height = 'auto';
-        addSticky.style.minWidth = '240px';
-        addSticky.style.maxWidth = '280px';
+        addSticky.style.minWidth = '260px';
+        addSticky.style.maxWidth = '320px';
         addSticky.style.display = 'block';
         addSticky.innerHTML = `
           <div class="pin-icon"></div>
           <div class="note-inner">
             <div class="inline-editor">
               <textarea id="inlinePostText" rows="3" placeholder="what's on your mind?"></textarea>
+              <div style="font-size:11px; margin-top:5px;">card color</div>
               <div class="color-row" id="colorRow"></div>
+              <div style="font-size:11px; margin-top:5px;">text color</div>
+              <div class="text-color-row" id="textColorRow"></div>
               <div class="inline-actions">
                 <button class="inline-cancel-btn" id="cancelPostBtn">cancel</button>
                 <button class="inline-post-btn" id="submitPostBtn">pin it ✧</button>
@@ -662,22 +733,42 @@
             </div>
           </div>
         `;
-        const colorMap = { cream:'#fffef5', ivory:'#fef7e8', mint:'#f2f9f2', lavender:'#f8f3fc', peach:'#fff2e6', sky:'#eef5ff', rose:'#fff0f2', butter:'#fff8e0', seafoam:'#e9f4ef', terracotta:'#fceaea', mauve:'#f5ecf0', citrus:'#fff7e0' };
-        let selectedColor = 'cream';
+        
+        // Build color options
         const colorRow = document.getElementById('colorRow');
-        colorClasses.forEach(c => {
-          const dot = document.createElement('div');
-          dot.className = 'color-dot';
-          dot.style.backgroundColor = colorMap[c];
-          dot.dataset.color = c;
-          if (c === 'cream') dot.classList.add('selected');
-          dot.addEventListener('click', () => {
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-            dot.classList.add('selected');
-            selectedColor = c;
+        let selectedCardColor = 'cream';
+        cardColors.forEach(c => {
+          const chip = document.createElement('div');
+          chip.className = 'color-chip';
+          chip.style.backgroundColor = c.bg;
+          chip.dataset.color = c.name;
+          if (c.name === 'cream') chip.classList.add('selected');
+          chip.addEventListener('click', () => {
+            document.querySelectorAll('#colorRow .color-chip').forEach(ch => ch.classList.remove('selected'));
+            chip.classList.add('selected');
+            selectedCardColor = c.name;
           });
-          colorRow.appendChild(dot);
+          colorRow.appendChild(chip);
         });
+        
+        const textColorRow = document.getElementById('textColorRow');
+        let selectedTextColor = 'dark';
+        textColors.forEach(t => {
+          const chip = document.createElement('div');
+          chip.className = 'text-chip';
+          chip.style.backgroundColor = t.color;
+          chip.style.color = t.name === 'white' || t.name === 'yellow' ? '#000' : '#fff';
+          chip.innerText = t.label;
+          chip.dataset.textcolor = t.name;
+          if (t.name === 'dark') chip.classList.add('selected');
+          chip.addEventListener('click', () => {
+            document.querySelectorAll('#textColorRow .text-chip').forEach(ch => ch.classList.remove('selected'));
+            chip.classList.add('selected');
+            selectedTextColor = t.name;
+          });
+          textColorRow.appendChild(chip);
+        });
+        
         document.getElementById('submitPostBtn').onclick = async () => {
           const text = document.getElementById('inlinePostText').value.trim();
           if (!text) { toastMsg('write something'); return; }
@@ -686,7 +777,9 @@
             body: JSON.stringify({
               user_id: currentUser.id,
               author_name: currentProfile?.name || 'visitor',
-              content: text
+              content: text,
+              card_color: selectedCardColor,
+              text_color: selectedTextColor
             })
           });
           loadAllNotes();
@@ -726,7 +819,9 @@
     loadAllNotes();
   });
 
-  sb.auth.onAuthStateChange(async () => { await updateSession(); if (document.getElementById('feelingsPage').classList.contains('active')) { updateUIButtons(); loadAllNotes(); } });
+  sb.auth.onAuthStateChange(async () => { 
+    await updateSession(); 
+  });
   (async () => { await updateSession(); })();
 </script>
 </body>
